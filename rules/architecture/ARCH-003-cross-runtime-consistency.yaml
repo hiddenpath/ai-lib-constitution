@@ -1,0 +1,189 @@
+---
+rule_id: "ARCH-003"
+title: "Cross-Runtime Behavioral Consistency"
+category: "architecture"
+severity: "high"
+priority: 3
+languages: []  # Meta-rule for all languages
+
+applicable_projects:
+  - "ai-protocol"
+  - "ai-lib-rust"
+  - "ai-lib-python"
+  - "ai-lib-ts"
+
+description: |
+  All runtimes (Rust, Python, TypeScript) MUST exhibit the same behavior
+  for the same input when using the same provider manifest.
+
+core_principle: |
+  "Same input, same manifest, same output across all runtimes"
+
+consistency_requirements:
+  - "Unified StreamingEvent types across all runtimes"
+  - "Identical error classification and error codes"
+  - "Same retry/fallback logic for same error codes"
+  - "Same parameter mapping for all providers"
+  - "Same tool call accumulation semantics"
+
+critical_consistency_points:
+  - "PartialContentDelta: content string must be identical"
+  - "ToolCallStarted: same name, id extraction"
+  - "ToolCallDelta: same argument accumulation"
+  - "StreamEnd: same finish_reason values"
+  - "StreamError: same error_code from E1001-E9999"
+
+validation_method:
+  type: "compliance_test_suite"
+  location: "ai-protocol/tests/compliance/"
+  format: "YAML test definitions"
+  execution: |
+    Each test case specifies:
+    - Provider manifest
+    - Input request
+    - Expected streaming events (exact match)
+    - All runtimes must pass same tests
+
+  test_structure:
+    language: "yaml"
+    example: |
+      test_id: "anthropic-text-streaming"
+      provider: "anthropic"
+      manifest_ref: "ai-protocol/v1/providers/anthropic.yaml"
+      input:
+        model: "claude-3-5-sonnet-20241022"
+        messages:
+          - role: "user"
+            content: "Test"
+      expected_events:
+        - event_type: "PartialContentDelta"
+          content: "Te"
+        - event_type: "PartialContentDelta"
+          content: "st"
+        - event_type: "StreamEnd"
+          finish_reason: "end_turn"
+
+compliance_test_execution:
+  rust: |
+    cargo test --test compliance
+    ENV: COMPLIANCE_DIR=../ai-protocol/tests/compliance
+
+  python: |
+    pytest tests/compliance/ -v
+    ENV: COMPLIANCE_DIR=../ai-protocol/tests/compliance
+
+  typescript: |
+    npm run test:compliance
+    ENV: COMPLIANCE_DIR=../ai-protocol/tests/compliance
+
+error_code_alignment:
+  error_code_schema: |
+    E1XXX: Client errors (4xx)
+    E1001: invalid_request
+    E1002: authentication
+    E1003: permission_denied
+    E1004: not_found
+    E1005: request_too_large
+
+    E2XXX: Rate limiting (429)
+    E2001: rate_limited
+    E2002: quota_exhausted
+
+    E3XXX: Server errors (5xx)
+    E3001: server_error
+    E3002: overloaded
+    E3003: timeout
+
+    E4XXX: Conflict
+    E4001: conflict
+    E4002: cancelled
+
+    E9999: unknown
+
+  implementation_requirement: |
+    All runtimes must classify provider errors using the same
+    error code mapping logic defined in ai-protocol manifest
+    field: error_classification
+
+retry_semantics:
+  retryable_errors:
+    - "E2001: rate_limited"
+    - "E2002: quota_exhausted"
+    - "E3001: server_error"
+    - "E3002: overloaded"
+    - "E3003: timeout"
+    - "E4001: conflict"
+
+  non_retryable_errors:
+    - "E1001: invalid_request"
+    - "E1002: authentication"
+    - "E1003: permission_denied"
+    - "E1004: not_found"
+    - "E1005: request_too_large"
+    - "E4002: cancelled"
+    - "E9999: unknown"
+
+  fallbackable_errors:
+    - "E1002: authentication"
+    - "E2001: rate_limited"
+    - "E2002: quota_exhausted"
+    - "E3001: server_error"
+    - "E3002: overloaded"
+    - "E3003: timeout"
+
+validation_checklist:
+  - id: "ARCH-003-01"
+    check: "All StreamingEvent types have identical field names across runtimes"
+    verification: "grep -r 'PartialContentDelta' in all runtime source"
+
+  - id: "ARCH-003-02"
+    check: "Error codes aligned with E1001-E9999 scheme"
+    verification: "grep -r 'E1.*E2.*E3.*E4.*E9999' in all runtime source"
+
+  - id: "ARCH-003-03"
+    check: "Compliance tests pass for all runtimes"
+    verification: "Run test suite and verify 100% pass rate"
+
+  - id: "ARCH-003-04"
+    check: "Retry logic matches error code table"
+    verification: "Unit test for retry decision with each error code"
+
+anti_patterns:
+  - "Runtime-specific event types (e.g., AnthropicEvent, OpenAIEvent)"
+  - "Different field names for same concept (e.g., 'text' vs 'content')"
+  - "Custom error classification per runtime"
+  - "Runtime-specific retry policies"
+
+migration_guide:
+  when: "Adding new StreamingEvent type"
+  steps:
+    1. "Define event in ai-protocol spec.yaml"
+    2. "Add to schemas/events.json"
+    3. "Implement in ai-lib-rust"
+    4. "Implement in ai-lib-python"
+    5. "Implement in ai-lib-ts"
+    6. "Add compliance test case for new event"
+    7. "Verify all runtimes pass test"
+
+when: "Adding new provider manifest"
+  steps:
+    1. "Create provider YAML in ai-protocol/v1/providers/"
+    2. "Define error_classification field"
+    3. "Create compliance test case for provider"
+    4. "Run compliance tests on all runtimes"
+    5. "Fix inconsistencies until all pass"
+
+references:
+  compliance_tests: "https://github.com/hiddenpath/ai-protocol/tree/main/tests/compliance"
+  cross_runtime_doc: "https://github.com/hiddenpath/ai-protocol/blob/main/docs/CROSS_RUNTIME.md"
+  related_rules:
+    - "ARCH-001"  # Protocol-driven design
+    - "ARCH-002"  # Operator-based architecture
+    - "TEST-001"  # Compliance test requirements
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-02-27"
+  last_modified: "2026-02-27"
+  version: "1.0"
+  status: "active"

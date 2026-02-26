@@ -1,0 +1,211 @@
+---
+rule_id: "TEST-001"
+title: "Cross-Runtime Compliance Tests"
+category: "testing"
+severity: "critical"
+priority: 1
+languages: []
+applicable_projects:
+  - "ai-protocol"
+  - "ai-lib-rust"
+  - "ai-lib-python"
+  - "ai-lib-ts"
+
+description: |
+  All runtimes MUST pass the shared compliance test suite located at
+  ai-protocol/tests/compliance/. Tests are defined in YAML and verify
+  behavioral consistency across runtimes.
+
+core_principle: |
+  "Same input, same manifest, same output - guaranteed by compliance tests"
+
+test_structure:
+  location: "ai-protocol/tests/compliance/"
+
+  yaml_format: |
+    ---
+    test_id: "anthropic-streaming-basic"
+    provider: "anthropic"
+    manifest_ref: "ai-protocol/v1/providers/anthropic.yaml"
+    model: "claude-3-5-sonnet-20241022"
+    requires_real_api: false
+
+    input:
+      messages:
+        - role: "user"
+          content: "Say 'Hello'"
+
+    expected_streaming_pattern:
+      events:
+        - event_type: "PartialContentDelta"
+          content_pattern: "^H"
+
+        - event_type: "PartialContentDelta"
+          content_pattern: "^ello$"
+
+        - event_type: "StreamEnd"
+          finish_reason: "end_turn"
+
+    metadata:
+      version: "1.0"
+      created: "2026-02-27"
+
+test_categories:
+  category_1: " Streaming Events"
+    description: "Verify streaming event emission matches specification"
+    types:
+      - "PartialContentDelta"
+      - "ToolCallStarted"
+      - "ToolCallDelta"
+      - "ToolCallFinished"
+      - "StreamEnd"
+      - "StreamError"
+
+  category_2: "Error Handling"
+    description: "Verify error classification and retry semantics"
+    types:
+      - "Invalid request → E1001"
+      - "Authentication → E1002"
+      - "Rate limit → E2001"
+
+  category_3: "Tool Calling"
+    description: "Verify tool call accumulation and mapping"
+    types:
+      - "Single tool call"
+      - "Multiple tool calls"
+      - "Partial tool arguments"
+
+execution_requirements:
+  rust: |
+    # Run compliance tests
+    cargo test --test compliance
+
+    # With custom compliance directory
+    COMPLIANCE_DIR=../ai-protocol/tests/compliance cargo test --test compliance
+
+    # Output pass/fail per test case
+
+  python: |
+    # Run compliance tests
+    pytest tests/compliance/ -v
+
+    # With custom compliance directory
+    COMPLIANCE_DIR=../ai-protocol/tests/compliance pytest tests/compliance/ -v
+
+  typescript: |
+    # Run compliance tests
+    npm run test:compliance
+
+pass_rate_requirement: |
+  All runtimes MUST achieve 100% pass rate on compliance tests
+  before any release can be published.
+
+  Pass rate calculation:
+  pass_rate = (passed_tests / total_tests) * 100
+
+  Threshold: 100.0%
+
+compliance_matrix:
+  format: |
+    +----------------+----------+---------+---------+
+    | Test Case      | Rust     | Python  | TypeScript|
+    +----------------+----------+---------+---------+
+    | anthropic-001  | PASS     | PASS    | PASS    |
+    | openai-001     | PASS     | PASS    | PASS    |
+    | tool-call-001  | PASS     | PASS    | PASS    |
+    +----------------+----------+---------+---------+
+    | Total          | 100/100  | 100/100 | 100/100 |
+    +----------------+----------+---------+---------+
+
+test_isolation:
+  requirement: "Each test must be independent"
+  mechanism: "Use ai-protocol-mock for deterministic tests"
+
+  mock_usage:
+    rust: |
+      MOCK_HTTP_URL=http://localhost:4010 MOCK_MCP_URL=http://localhost:4010/mcp cargo test -- --ignored --nocapture
+
+    python: |
+      MOCK_HTTP_URL=http://localhost:4010 MOCK_MCP_URL=http://localhost:4010/mcp pytest tests/ -v
+
+continuous_integration:
+  github_actions: |
+    name: Compliance Tests
+
+    jobs:
+      compliance:
+        strategy:
+          matrix:
+            runtime: [rust, python, typescript]
+        steps:
+          - uses: actions/checkout@v3
+          - name: Run compliance tests (${{ matrix.runtime }})
+            run: |
+              # Runtime-specific commands
+              # Generate compliance matrix
+              # Upload artifacts
+
+ci_requirements:
+  - "Run compliance tests on every PR"
+  - "Block merge if compliance rate < 100%"
+  - "Generate compliance matrix report"
+  - "Upload test artifacts for audit"
+
+new_procedure: "Adding New Compliance Test"
+  steps:
+    1. "Create YAML test file in ai-protocol/tests/compliance/"
+    2. "Define test_id, provider, input, expected_output"
+    3. "Implement test runner in all runtimes"
+    4. "Verify test runs with ai-protocol-mock"
+    5. "Update compliance matrix CI"
+  must_pass: "All runtimes before merging"
+
+new_provider_procedure: "Adding New Provider to Compliance"
+  steps:
+    1. "Create provider YAML in ai-protocol/v1/providers/"
+    2. "Create compliance test cases for provider"
+    3. "Run tests with ai-protocol-mock first"
+    4. "Run integration tests with real API (if available)"
+    5. "All runtimes must pass all tests"
+
+validation_tools:
+  tool_1: "Compliance Matrix Generator"
+    purpose: "Generate pass/fail matrix across runtimes"
+    output: "compliance-matrix.md"
+
+  tool_2: "Test Artifact Collector"
+    purpose: "Collect test logs for debugging"
+    output: "test-logs-<runtime>.log"
+
+  tool_3: "Coverage Analyzer"
+    purpose: "Ensure all protocol features are tested"
+    output: "coverage-report.md"
+
+troubleshooting:
+  scenario_1: "Test passes in one runtime, fails in another"
+    diagnosis: "Runtime-specific implementation bug"
+    action: "Cross-reference code between runtimes, fix inconsistency"
+
+  scenario_2: "All runtimes fail new test"
+    diagnosis: "Protocol manifest issue"
+    action: "Review provider YAML configuration"
+
+  scenario_3: "Test flaky (intermittent failures)"
+    diagnosis: "Race condition or timing issue"
+    action: "Add proper synchronization or determinism"
+
+references:
+  compliance_tests: "https://github.com/hiddenpath/ai-protocol/tree/main/tests/compliance"
+  cross_runtime_doc: "https://github.com/hiddenpath/ai-protocol/blob/main/docs/CROSS_RUNTIME.md"
+  mock_server: "https://github.com/hiddenpath/ai-protocol-mock"
+  related_rules:
+    - "ARCH-003"  # Cross-runtime consistency
+    - "RUST-001"  # Error handling
+    - "PY-001"    # Type hints
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-02-27"
+  last_modified: "2026-02-27"
+  version: "1.0"
+  status: "active"

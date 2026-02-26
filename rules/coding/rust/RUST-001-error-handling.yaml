@@ -1,0 +1,204 @@
+---
+rule_id: "RUST-001"
+title: "Error Handling with Result<T, E> and ? Operator"
+category: "coding"
+language: "rust"
+severity: "critical"
+priority: 1
+
+applicable_projects:
+  - "ai-lib-rust"
+
+description: |
+  All functions that can potentially fail MUST return Result<T, E>.
+  NEVER use unwrap(), expect(), or panic!() in production code.
+
+core_principle: |
+  "Explicit error propagation using ? operator, never silently fail"
+
+requirements:
+  - "Public APIs return Result<T, E>"
+  - "Use ? operator for error propagation"
+  - "Define custom error types with Context"
+  - "Provide helpful error context via .with_context()"
+  - "Use thiserror or anyhow for error handling"
+
+forbidden_patterns:
+  - type: "unwrap()"
+    alternative: "Use ? operator to propagate error"
+    reason: "Panic on unwrap is unacceptable in production"
+
+  - type: "expect()"
+    alternative: "Use ? operator with better error handling"
+    reason: "Still panics, just with message"
+
+  - type: ".unwrap_or()"
+    alternative: "Use .ok_or() or explicit match"
+    reason: "Silently ignores failures"
+
+  - type: ".unwrap_or_default()"
+    alternative: "Use proper error handling"
+    reason: "May hide errors"
+
+correct_implementation:
+  example: |
+    // CORRECT: Result return type with ? operator
+    use thiserror::Error;
+
+    #[derive(Debug, Error)]
+    pub enum ProtocolError {
+        #[error("Failed to load manifest for provider {provider_id}")]
+        ManifestLoadError { provider_id: String, #[source] Box<dyn std::error::Error> },
+
+        #[error("Invalid JSON in manifest: {0}")]
+        InvalidJson(#[from] serde_json::Error),
+
+        #[error("HTTP request failed: {0}")]
+        RequestError(#[from] reqwest::Error),
+    }
+
+    pub async fn load_provider(&self, provider_id: &str) -> Result<ProtocolManifest, ProtocolError> {
+        let manifest_path = self.find_manifest_path(provider_id)
+            .ok_or_else(|| ProtocolError::ManifestLoadError {
+                provider_id: provider_id.to_string(),
+                source: Box::new(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "Manifest not found"
+                ))
+            })?;
+
+        let content = tokio::fs::read_to_string(&manifest_path)
+            .await
+            .with_context(|| format!("Failed to read manifest at {}", manifest_path))?;
+
+        let manifest: ProtocolManifest = serde_yaml::from_str(&content)
+            .with_context(|| format!("Failed to parse manifest for {}", provider_id))?;
+
+        Ok(manifest)
+    }
+
+incorrect_implementation:
+  example: |
+    // INCORRECT: Multiple unwrap() calls that can panic
+    pub fn load_provider(&self, provider_id: &str) -> ProtocolManifest {
+        let path = format!("manifests/{}.yaml", provider_id);
+        let content = fs::read_to_string(path).unwrap();  // PANIC if file missing
+        serde_yaml::from_str(&content).unwrap()  // PANIC if invalid YAML
+    }
+
+validation:
+  - type: "linter"
+    tool: "clippy"
+    checks:
+      - "unwrap_used"
+      - "expect_used"
+      - "todo"  # Should not land TODOs in main
+
+  - type: "code_review"
+    grep_patterns:
+      - "\\.unwrap("
+      - "\\.expect("
+      - "panic!"
+
+  - type: "test_coverage"
+    requirement: "All error paths must be tested"
+
+  - type: "manual_review"
+    check: "Review any uses of allow(clippy::unwrap_used)"
+
+error_context_best_practices:
+  scenario: "File operations"
+  good: |
+    tokio::fs::read_to_string(path)
+        .await
+        .with_context(|| format!("Failed to read config file: {}", path))?
+
+  scenario: "Network requests"
+  good: |
+    client.post(&url)
+        .json(&payload)
+        .send()
+        .await
+        .with_context(|| format!("HTTP POST to {} failed", url))?
+
+  scenario: "JSON parsing"
+  good: |
+    serde_json::from_str::<T>(&json_str)
+        .with_context(|| "Failed to parse JSON response from API")?
+
+custom_error_type_template:
+  example: |
+    use thiserror::Error;
+
+    #[derive(Debug, Error)]
+    pub enum MyError {
+        #[error("Resource not found: {resource_id}")]
+        NotFound { resource_id: String },
+
+        #[error("Permission denied: {0}")]
+        PermissionDenied(String),
+
+        #[error("Upstream service error: {source}")]
+        Upstream {
+            #[from]
+            source: reqwest::Error,
+        },
+
+        #[error("Validation error: {field} is invalid")]
+        ValidationError { field: String },
+    }
+
+    type Result<T> = std::result::Result<T, MyError>;
+
+unit_test_template:
+  example: |
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use thiserror::Error;
+
+        #[tokio::test]
+        async fn test_load_provider_not_found() {
+            let loader = ProtocolLoader::new();
+            let result = loader.load_provider("nonexistent").await;
+
+            assert!(result.is_err());
+            match result.unwrap_err() {
+                ProtocolError::ManifestLoadError { provider_id, .. } => {
+                    assert_eq!(provider_id, "nonexistent");
+                }
+                _ => panic!("Expected ManifestLoadError"),
+            }
+        }
+
+        #[tokio::test]
+        async fn test_load_provider_invalid_yaml() {
+            // Create invalid manifest
+            let temp_file = tempfile::NamedTempFile::new().unwrap();
+            fs::write(temp_file.path(), "invalid: yaml: content").unwrap();
+
+            let loader = ProtocolLoader::new();
+            let result = loader.load_manifest(temp_file.path()).await;
+
+            assert!(result.is_err());
+            match result.unwrap_err() {
+                ProtocolError::InvalidJson(_) => (),
+                _ => panic!("Expected InvalidJson error"),
+            }
+        }
+    }
+
+references:
+  thiserror_docs: "https://docs.rs/thiserror/"
+  anyhow_docs: "https://docs.rs/anyhow/"
+  error_handling_best_practices: "https://doc.rust-lang.org/book/ch09-00-error-handling.html"
+  related_rules:
+    - "RUST-002"  # Async functions
+    - "RUST-003"  # Naming conventions
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-02-27"
+  last_modified: "2026-02-27"
+  version: "1.0"
+  status: "active"

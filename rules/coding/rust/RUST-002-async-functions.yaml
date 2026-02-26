@@ -1,0 +1,265 @@
+---
+rule_id: "RUST-002"
+title: "Async Functions and Tokio Concurrency"
+category: "coding"
+language: "rust"
+severity: "critical"
+priority: 2
+
+applicable_projects:
+  - "ai-lib-rust"
+
+description: |
+  All I/O operations MUST be async. Use tokio runtime with proper
+  async/await patterns. Never block the async runtime.
+
+core_principle: |
+  "Never block the async runtime, all I/O must be async"
+
+requirements:
+  - "All file I/O use tokio::fs"
+  - "All network I/O use reqwest with async"
+  - "All timeouts use tokio::time::timeout"
+  - "Use tokio::spawn for concurrent tasks"
+  - "Use select! for waiting on multiple futures"
+  - "Never use std::fs or std::net in async code"
+
+async_patterns:
+  file_io:
+    correct: |
+      use tokio::fs;
+      use tokio::io::AsyncReadExt;
+
+      // CORRECT: Async file I/O
+      async fn read_manifest(path: &Path) -> Result<String, std::io::Error> {
+        let content = fs::read_to_string(path).await?;
+        Ok(content)
+      }
+
+    incorrect: |
+      use std::fs;
+
+      // INCORRECT: Blocking I/O blocks entire tokio runtime
+      async fn read_manifest(path: &Path) -> Result<String, std::io::Error> {
+        let content = fs::read_to_string(path)?;  // BLOCKS the entire runtime!
+        Ok(content)
+      }
+
+  network_io:
+    correct: |
+      use reqwest::Client;
+
+      async fn fetch_model_info(client: &Client, url: &str) -> Result<ModelInfo, reqwest::Error> {
+        let response = client.get(url).send().await?;
+        let info: ModelInfo = response.json().await?;
+        Ok(info)
+      }
+
+  timeout_handling:
+    correct: |
+      use tokio::time::{timeout, Duration};
+
+      async fn with_timeout<T, F>(
+          future: F,
+          duration: Duration
+      ) -> Result<T, TimeoutError>
+      where
+          F: Future<Output = Result<T, Error>>,
+      {
+          timeout(duration, future)
+              .await
+              .map_err(|_| TimeoutError)?
+      }
+
+  concurrent_execution:
+    correct: |
+      use futures::future::{join_all, try_join_all};
+
+      async fn load_all_providers(loader: &ProtocolLoader) -> Result<Vec<ProtocolManifest>, Error> {
+          let provider_ids = vec!["anthropic", "openai", "gemini"];
+
+          let manifests = try_join_all(
+              provider_ids.into_iter().map(|id| loader.load_provider(id))
+          ).await?;
+
+          Ok(manifests)
+      }
+
+blocking_operations_that_require_blocking_pool:
+  situations:
+    - "CPU-intensive computation (hashing, encryption)"
+    - "Legacy synchronous third-party libraries"
+    - "Filesystem operations on local machine (sometimes)"
+
+  correct_approach: |
+    use tokio::task::spawn_blocking;
+
+    async fn compute_hash_blocking(data: &[u8]) -> u64 {
+        spawn_blocking(move || {
+            // CPU-intensive work
+            let mut hasher = DefaultHasher::new();
+            hasher.write(data);
+            hasher.finish()
+        }).await.unwrap()
+    }
+
+forbidden_patterns:
+  - "std::fs::read_to_string in async fn" -> Use tokio::fs instead
+  - "std::net::TcpStream in async fn" -> Use tokio::net instead
+  - "blocking I/O in async fn without spawn_blocking"
+  - "Thread::sleep" -> Use tokio::time::sleep instead
+
+correct_implementation:
+  example: |
+    use tokio::time::{timeout, Duration};
+    use tokio::select;
+
+    struct ProtocolLoader {
+        client: reqwest::Client,
+        base_path: PathBuf,
+    }
+
+    impl ProtocolLoader {
+        // CORRECT: Async method with timeout and proper error handling
+        pub async fn load_provider(&self, provider_id: &str) -> Result<ProtocolManifest, Error> {
+            let manifest_path = self.base_path.join(format!("{}.yaml", provider_id));
+
+            let content = timeout(
+                Duration::from_secs(5),
+                tokio::fs::read_to_string(&manifest_path)
+            )
+            .await
+            .map_err(|_| Error::Timeout)?
+            .map_err(|e| Error::IoError(e))?;
+
+            let manifest: ProtocolManifest = serde_yaml::from_str(&content)?;
+            Ok(manifest)
+        }
+
+        // CORRECT: Loading multiple manifests concurrently
+        pub async fn load_all_providers(&self, provider_ids: &[&str]) -> Result<Vec<ProtocolManifest>, Error> {
+            let futures = provider_ids.iter().map(|id| self.load_provider(id));
+            try_join_all(futures).await
+        }
+
+        // CORRECT: Select pattern for race conditions
+        pub async fn load_with_fallback(&self, primary: &str, fallback: &str) -> Result<ProtocolManifest, Error> {
+            let primary_fut = self.load_provider(primary);
+            let timeout_fut = tokio::time::sleep(Duration::from_secs(2));
+
+            tokio::select! {
+                result = primary_fut => result,
+                _ = timeout_fut => self.load_provider(fallback).await,
+            }
+        }
+    }
+
+incorrect_implementation:
+  example: |
+    // INCORRECT: Blocking I/O in async context
+    async fn load_manifest_blocking(&self, path: &Path) -> Result<String, Error> {
+        let content = std::fs::read_to_string(path)?;  // BLOCKS runtime!
+        Ok(content)
+    }
+
+    // INCORRECT: Using std::thread::sleep instead of tokio::time::sleep
+    async fn wait_for_retry(&self) -> Result<(), Error> {
+        std::thread::sleep(Duration::from_secs(1));  // BLOCKS entire thread!
+        Ok(())
+    }
+
+validation:
+  - type: "linter"
+    tool: "clippy"
+    checks:
+      - "std::fs in async functions"
+      - "Thread::sleep in async functions"
+
+  - type: "code_review"
+    grep_patterns:
+      - "std::fs::" in files with "async fn"
+      - "std::net::" in files with "async fn"
+      - "thread::sleep" in files with "async fn"
+
+  - type: "runtime_monitoring"
+    check: "Monitor tokio runtime metrics for blocking threads"
+
+tokio_runtime_configuration:
+  config: |
+    use tokio::runtime::Builder;
+
+    #[tokio::main(flavor = "multi_thread")]
+    async fn main() -> Result<(), Box<dyn std::error::Error>> {
+        // Or custom runtime configuration
+        let runtime = Builder::new_multi_thread()
+            .worker_threads(4)
+            .thread_name("ai-lib-loader")
+            .enable_all()
+            .build()?;
+
+        runtime.block_on(async {
+            // Async code here
+            Ok::<(), Box<dyn std::error::Error>>(())
+        })
+    }
+
+select_pattern_examples:
+  pattern_1: "First success wins"
+  example: |
+    tokio::select! {
+        result = self.load_provider("anthropic") => Ok(result?),
+        result = self.load_provider("openai") => Ok(result?),
+        _ = timeout(Duration::from_secs(5)) => Err(Error::Timeout),
+    }
+
+  pattern_2: "Wait for multiple futures"
+  example: |
+    tokio::select! {
+        _ = tokio::signal::ctrl_c() => {
+            println!("Received Ctrl+C");
+        }
+        Some(item) = rx.recv() => {
+            println!("Received: {:?}", item);
+        }
+    }
+
+cancellation_handling:
+  correct: |
+    use tokio_util::sync::CancellationToken;
+
+    struct DownloadTask {
+        cancel_token: CancellationToken,
+    }
+
+    impl DownloadTask {
+        async fn download(&self, url: &str) -> Result<String, Error> {
+            let mut response = reqwest::get(url).await?;
+
+            loop {
+                tokio::select! {
+                    _ = self.cancel_token.cancelled() => {
+                        return Err(Error::Cancelled);
+                    }
+                    chunk_opt = response.chunk().await => {
+                        let chunk = chunk_opt?.ok_or(Error::UnexpectedEof)?;
+                        // Process chunk
+                    }
+                }
+            }
+        }
+    }
+
+references:
+  tokio_docs: "https://docs.rs/tokio/"
+  async_book: "https://rust-lang.github.io/async-book/"
+  reqwest_docs: "https://docs.rs/reqwest/"
+  related_rules:
+    - "RUST-001"  # Error handling
+    - "RUST-003"  # Naming conventions
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-02-27"
+  last_modified: "2026-02-27"
+  version: "1.0"
+  status: "active"

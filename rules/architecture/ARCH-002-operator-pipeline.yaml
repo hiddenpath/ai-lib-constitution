@@ -1,0 +1,215 @@
+---
+rule_id: "ARCH-002"
+title: "Operator-Based Pipeline Architecture"
+category: "architecture"
+severity: "critical"
+priority: 2
+languages: []  # Applies to all
+
+applicable_projects:
+  - "ai-lib-rust"
+  - "ai-lib-python"
+  - "ai-lib-ts"
+
+description: |
+  Stream processing must use the operator pipeline architecture:
+  Decoder → Selector → Accumulator → FanOut → EventMapper
+
+core_principle: |
+  All streaming response normalization is done through composable operators
+  that transform raw provider frames into unified StreamingEvent objects.
+
+operator_pipeline:
+  - name: "Decoder"
+    purpose: "Parse raw bytes into protocol frames"
+    formats:
+      - "SSE (Server-Sent Events)"
+      - "JSON Lines (NDJSON)"
+      - "HTTP response body"
+    manifest_field: "streaming.decoder"
+    examples:
+      - "anthropic_sse"
+      - "openai_sse"
+      - "json_lines"
+
+  - name: "Selector"
+    purpose: "Filter frames using JSONPath/JSONata expressions"
+    manifest_field: "streaming.event_map.*.match"
+    example: "$.type == 'content_block_delta'"
+
+  - name: "Accumulator"
+    purpose: "Accumulate stateful data across frames"
+    use_cases:
+      - "Tool call arguments (partial JSON)"
+      - "Multi-part content"
+    manifest_field: "streaming.accumulator"
+
+  - name: "FanOut"
+    purpose: "Handle multi-candidate scenarios"
+    manifest_field: "streaming.candidate"
+    condition: "fan_out: true"
+
+  - name: "EventMapper"
+    purpose: "Convert provider frames to unified StreamingEvent"
+    manifest_field: "streaming.event_map"
+    standard_events:
+      - "PartialContentDelta"
+      - "ToolCallStarted"
+      - "ToolCallDelta"
+      - "ToolCallFinished"
+      - "StreamEnd"
+      - "StreamError"
+
+requirements:
+  - "All operators configured via manifest (YAML)"
+  - "No hardcoded frame matching logic"
+  - "Unified event types across all providers"
+  - "Hot-reloadable operator configurations"
+
+correct_implementation:
+  language: "rust"
+  example: |
+    // CORRECT: Operator pipeline from manifest
+    use ai_lib_rust::pipeline::{Decoder, Selector, Accumulator, FanOut, EventMapper};
+
+    pub struct Pipeline {
+        decoder: Decoder,
+        selector: Selector,
+        accumulator: Option<Accumulator>,
+        fanout: Option<FanOut>,
+        event_mapper: EventMapper<Pipeline>,
+    }
+
+    impl Pipeline {
+        pub fn from_manifest(manifest: &ProtocolManifest) -> Result<Self> {
+            let streaming = &manifest.streaming;
+            let decoder = Decoder::new(&streaming.decoder)?;
+            let event_map = &streaming.event_map;
+            let selector = Selector::from_event_map(event_map);
+            let accumulator = streaming.accumulator.as_ref()
+                .map(Accumulator::from_config);
+            let fanout = streaming.candidate.as_ref()
+                .filter(|c| c.fan_out)
+                .map(FanOut::new);
+            let event_mapper = EventMapper::new(event_map)?;
+            Ok(Pipeline { decoder, selector, accumulator, fanout, event_mapper })
+        }
+
+        pub fn process(&mut self, chunk: &[u8]) -> Vec<StreamingEvent> {
+            let frames = self.decoder.decode(chunk);
+            let selected = self.selector.filter(frames);
+            let accumulated = self.accumulate(selected);
+            let fanned = self.fan_out(accumulated);
+            self.event_mapper.map(fanned)
+        }
+    }
+
+incorrect_implementation:
+  language: "rust"
+  example: |
+    // INCORRECT: Hardcoded provider-specific parsing
+    fn parse_anthropic_stream(chunk: &[u8]) -> Vec<Event> {
+        if chunk.contains(b'"type":"content_block_delta"') {
+            // Anthropic-specific parsing
+        } else if chunk.contains(b'"type":"content_block"') {
+            // More hardcoded logic
+        }
+    }
+
+    fn parse_openai_stream(chunk: &[u8]) -> Vec<Event> {
+        // OpenAI-specific parsing
+        // Duplicated logic from Anthropic
+    }
+
+manifest_configuration_example:
+  language: "yaml"
+  example: |
+    streaming:
+      decoder:
+        format: "anthropic_sse"
+        strategy: "anthropic_event_stream"
+
+      event_map:
+        - match: "$.type == 'content_block_delta' && $.delta.type == 'text_delta'"
+          emit: "PartialContentDelta"
+          extract:
+            content: "$.delta.text"
+
+        - match: "$.type == 'content_block_start' && $.content_block.type == 'tool_use'"
+          emit: "ToolCallStarted"
+          extract:
+            name: "$.content_block.name"
+            id: "$.content_block.id"
+
+      accumulator:
+        stateful_tool_parsing: true
+        key_path: "$.delta.partial_json"
+        flush_on: "$.type == 'content_block_stop'"
+
+      candidate:
+        candidate_id_path: "$.choices[*].index"
+        fan_out: true
+
+validation:
+  - type: "code_review"
+    check: "No provider-specific frame parsing code"
+    grep_patterns:
+      - "parse_anthropic_stream"
+      - "parse_openai_stream"
+      - "if chunk.contains(b\"openai\""
+
+  - type: "compliance_test"
+    test_path: "ai-protocol/tests/compliance/"
+    requirement: "Standardize event emission across providers"
+
+  - type: "manifest_validation"
+    check: "ai-protocol/schemas/v1.json validates streaming field"
+
+unit_test_example:
+  language: "rust"
+  example: |
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use ai_lib_rust::protocol::ProtocolLoader;
+
+        #[tokio::test]
+        async fn test_operator_pipeline_anthropic() {
+            let loader = ProtocolLoader::new();
+            let manifest = loader.load_provider("anthropic").await.unwrap();
+            let mut pipeline = Pipeline::from_manifest(&manifest).unwrap();
+
+            let chunk = b"event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Hello\"}}\n\n";
+            let events = pipeline.process(chunk);
+
+            assert_eq!(events.len(), 1);
+            matches!(events[0], StreamingEvent::PartialContentDelta { .. });
+        }
+
+        #[tokio::test]
+        async fn test_operator_pipeline_openai() {
+            let loader = ProtocolLoader::new();
+            let manifest = loader.load_provider("openai").await.unwrap();
+            let mut pipeline = Pipeline::from_manifest(&manifest).unwrap();
+
+            let chunk = b"data: {\"id\":\"chatcmpl-123\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hi\"}}]}\n\n";
+            let events = pipeline.process(chunk);
+
+            assert_eq!(events.len(), 1);
+            matches!(events[0], StreamingEvent::PartialContentDelta { .. });
+        }
+    }
+
+references:
+  standard: "https://github.com/hiddenpath/ai-protocol/blob/main/docs/V2_ARCHITECTURE.md"
+  related_rules:
+    - "ARCH-001"  # Protocol-driven design
+    - "ARCH-003"  # Multi-language consistency
+    - "TEST-001"  # Cross-runtime compliance tests
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-02-27"
+  last_modified: "2026-02-27"
+  version: "1.0"
+  status: "active"

@@ -1,0 +1,105 @@
+---
+rule_id: "ARCH-001"
+title: "Protocol-Driven Design - Zero Hardcoded Provider Logic"
+category: "architecture"
+severity: "critical"
+priority: 1
+languages: []  # Applies to all languages
+
+applicable_projects:
+  - "ai-protocol"
+  - "ai-lib-rust"
+  - "ai-lib-python"
+  - "ai-lib-ts"
+  - "ai-protocol-mock"
+
+description: |
+  ALL provider-specific logic must be driven by protocol manifests
+  (YAML configuration files in ai-protocol). No provider-specific code
+  should be hardcoded in runtime implementations.
+
+core_principle: |
+  "一切逻辑皆算子，一切配置皆协议"
+  - All logic is operators
+  - All configuration is protocol
+
+motivation: |
+  - Adding new providers should require zero code changes in runtimes
+  - All providers share the same unified API
+  - Updates to provider interfaces are managed by protocol changes
+  - Enables hot-reloading of protocol configurations
+
+requirements:
+  - "No match provider statements in code"
+  - "Provider behavior defined in YAML manifests under ai-protocol/{v1,v2}/providers/"
+  - "Runtime loads manifest dynamically via ProtocolLoader"
+  - "Operator pipeline built from manifest configuration"
+
+violations_to_avoid:
+  type: "code_pattern"
+  patterns:
+    - "match provider"
+    - "if provider == \"openai\""
+    - "Anthropic-specific code paths"
+    - "provider-specific constants"
+
+correct_implementation:
+  language: "rust"
+  example: |
+    // CORRECT: Protocol-driven
+    let manifest = loader.load_provider(provider_id).await?;
+    let pipeline = Pipeline::from_manifest(&manifest)?;
+
+    let client = AiClient::new(format!("{}/{}", provider_id, model)).await?;
+    // Works for ANY provider defined in ai-protocol
+
+incorrect_implementation:
+  language: "rust"
+  example: |
+    // INCORRECT: Hardcoded provider logic
+    match provider {
+        "openai" => {
+            // OpenAI-specific logic
+            url = "https://api.openai.com/v1";
+            body = format!(r#"{{"model": "{}", "messages": {}}}"#, model, messages);
+        }
+        "anthropic" => {
+            // Anthropic-specific logic
+            url = "https://api.anthropic.com/v1";
+            body = format!(r#"{{"model": "{}", "messages": {}}}"#, model, messages);
+        }
+    }
+
+validation:
+  - type: "code_review"
+    scope: "all_runtime_code"
+    check: "grep -r 'match provider' src/ ai-lib-rust/ src/ ai-lib-python/ src/ ai-lib-ts/"
+
+  - type: "architecture_review"
+    check: "Verify no provider-specific constants or magic strings"
+
+  - type: "compliance_test"
+    test_path: "ai-protocol/tests/compliance/"
+    requirement: "All runtimes must pass compliance tests with ANY provider manifest"
+
+references:
+  standard: "https://github.com/hiddenpath/ai-protocol/blob/main/docs/"
+  principle: "一切逻辑皆算子，一切配置皆协议"
+  related_rules:
+    - "ARCH-002"  # Operator-based architecture
+    - "ARCH-003"  # Multi-language consistency
+
+examples:
+  good_provider_addition: |
+    # To add new provider:
+    # 1. Create ai-protocol/v1/providers/newprovider.yaml
+    # 2. Define streaming.decoder, event_map, error_classification
+    # 3. Test compliance tests
+    # 4. NO CODE CHANGES in runtimes required!
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-02-27"
+  last_modified: "2026-02-27"
+  version: "1.0"
+  status: "active"
