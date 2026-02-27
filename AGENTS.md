@@ -1,0 +1,46 @@
+# Agent Operational Checklist
+
+> Operational checklists for AI agents working on the ai-lib ecosystem.
+> Read [SOUL.md](SOUL.md) for persona; load rules from `rules/` before making changes.
+
+---
+
+## Before Making Code Changes
+
+- [ ] **Load applicable rules**: Filter `rules/` by project and language (ARCH-*, RUST-*, PY-*, TS-*)
+- [ ] **Check MEMORY.md**: Read `ai-lib-plans/MEMORY.md` for durable decisions and conventions
+- [ ] **Verify scope**: Confirm which projects are affected (ai-protocol, ai-lib-rust, ai-lib-python, ai-lib-ts, ai-protocol-mock)
+
+---
+
+## After Making Code Changes
+
+- [ ] **Run linters**: rustfmt/clippy (Rust), ruff/mypy (Python), eslint (TypeScript)
+- [ ] **Run tests**: Unit tests + compliance tests where applicable
+- [ ] **Reference rule IDs**: When reporting violations, use `[RULE-ID] Message` format
+- [ ] **Update docs**: If API or behavior changed, update README and type hints. Follow DOC-001: English code docs + Chinese module header; internal docs in Chinese.
+
+---
+
+## Protocol / Manifest Changes
+
+- [ ] **Validate against schema**: Use ai-protocol schemas (provider.json, capabilities.json, etc.)
+- [ ] **Run compliance tests**: `ai-protocol/tests/compliance/`
+- [ ] **Check all runtimes**: Ensure Rust, Python, TS still pass with updated manifest
+
+---
+
+## Adding a New Provider
+
+1. Create manifest: `ai-protocol/v1/providers/newprovider.yaml` or v2-alpha equivalent
+2. Define: endpoint, auth, error_classification, streaming decoder, event_map
+3. Run compliance tests — **no runtime code changes required** (ARCH-001)
+
+---
+
+## Release Checklist
+
+- [ ] All compliance tests pass
+- [ ] CHANGELOG updated
+- [ ] Version bumped in pyproject.toml / Cargo.toml / package.json
+- [ ] Release notes drafted

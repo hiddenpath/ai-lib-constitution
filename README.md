@@ -59,6 +59,10 @@
 
 ## Quick Reference
 
+### Agent Identity & Checklists
+- **[SOUL.md](SOUL.md)** — Agent persona and principles
+- **[AGENTS.md](AGENTS.md)** — Operational checklists (before/after changes, release)
+
 ### Architecture Rules
 - Everything is an operator (算子), everything is protocol (协议)
 - Zero hardcoded provider logic
@@ -77,7 +81,9 @@
 ### Documentation Standards
 - README must include: Vision, Quick Start, Features, API, Architecture
 - All public APIs must have type information and examples
-- Bilingual (EN/CN) recommended for ecosystem projects
+- **Code docs**: English by default; add one Chinese summary line at module/file header
+- **Scope**: Applies to all publicly published code (ai-lib-rust, ai-lib-python, ai-lib-ts, ai-protocol-mock, ai-protocol)
+- **Internal docs**: Plans, reports, explanations for maintainer — use Chinese by default
 
 ## Current Ecosystem Projects
 
@@ -118,6 +124,11 @@
 | TS-001 | Strict mode required | critical |
 | TS-002 | Type safety | critical |
 | TS-003 | Error handling | high |
+
+### Documentation Rules
+| Rule ID | Topic | Priority |
+|---------|-------|----------|
+| DOC-001 | Code docs: English + Chinese module header | high |
 
 ---
 

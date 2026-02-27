@@ -1,0 +1,58 @@
+---
+rule_id: "DOC-001"
+title: "Documentation Language — English Code Docs with Chinese Module Header"
+category: "documentation"
+severity: "high"
+priority: 1
+
+applicable_projects:
+  - "ai-protocol"
+  - "ai-lib-rust"
+  - "ai-lib-python"
+  - "ai-lib-ts"
+  - "ai-protocol-mock"
+
+description: |
+  Code documentation uses English by default. Each module/file MUST include
+  one Chinese summary line at the header. Internal work docs (plans, reports,
+  explanations for maintainer) use Chinese by default.
+
+scope: "All publicly published code"
+
+requirements:
+  - "Code comments, docstrings, and API docs: English"
+  - "Module/file header: Add one Chinese line summarizing the module purpose"
+  - "Internal docs (plans, reports, standups, explanations): Chinese"
+
+examples:
+  rust_header: |
+    //! Error handling with Result<T, E>. 错误处理：使用 Result 与 ? 传播。
+    //!
+    //! All functions that can fail MUST return Result<T, E>.
+
+  python_header: |
+    """OpenAI-compatible driver. OpenAI 兼容驱动。"""
+    from __future__ import annotations
+
+  typescript_header: |
+    /**
+     * Message types for chat. 聊天消息类型定义。
+     */
+
+internal_docs:
+  - "ai-lib-plans/active/standup/daily/*.md — Chinese"
+  - "ai-lib-plans/active/projects/*/ — Chinese when for maintainer"
+  - "Reports, plans, task descriptions for maintainer — Chinese"
+
+validation:
+  - type: "code_review"
+    check: "Each .rs, .py, .ts module has Chinese summary in header"
+  - type: "manual"
+    check: "Internal docs use Chinese"
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-02-27"
+  last_modified: "2026-02-27"
+  version: "1.0"
+  status: "active"
