@@ -1,0 +1,70 @@
+---
+rule_id: "DOC-002"
+title: "Internal Work Documents Must Not Be Public"
+category: "documentation"
+severity: "critical"
+priority: 1
+languages: []  # Applies to all repositories and languages
+
+applicable_projects:
+  - "ai-protocol"
+  - "ai-lib-rust"
+  - "ai-lib-python"
+  - "ai-lib-ts"
+  - "ai-protocol-mock"
+  - "ai-mcp-model-switcher"
+  - "ai-lib-constitution"
+  - "ai-lib-plans"
+
+description: |
+  Internal-only work artifacts must never be uploaded or pushed to public repositories.
+  This includes discussion notes, plans, proposals, delivery reports, improvement reports,
+  internal summaries, and other maintainer-only documents.
+
+requirements:
+  - "Internal discussion/planning/report/solution docs MUST stay in private repositories only"
+  - "Do not commit internal work docs to public project repositories"
+  - "If mistakenly committed, remove from public branch immediately and add ignore safeguards"
+  - "Before push, review staged files for internal-work indicators (REPORT/SUMMARY/PLAN etc.)"
+
+violations_to_avoid:
+  type: "naming_and_location_pattern"
+  patterns:
+    - "PROJECT_SUMMARY.md in public repo"
+    - "PROJECT_DELIVERY_REPORT.md in public repo"
+    - "IMPROVEMENTS_REPORT.md in public repo"
+    - "*INTERNAL*.md committed to public repo"
+    - "discussion/plan/report docs stored alongside public runtime docs"
+
+correct_implementation:
+  language: "markdown"
+  example: |
+    # CORRECT
+    - Internal planning and reports are stored in ai-lib-plans (private).
+    - Public repositories keep only user-facing technical docs.
+
+incorrect_implementation:
+  language: "markdown"
+  example: |
+    # INCORRECT
+    - Commit internal delivery reports directly into a public repository root.
+
+validation:
+  - type: "pre-push_review"
+    check: "Inspect `git diff --cached --name-only` and reject internal-work docs in public repos"
+
+  - type: "repo_hygiene"
+    check: "Add .gitignore protections for known internal artifact names where needed"
+
+references:
+  related_rules:
+    - "DOC-001"
+    - "ARCH-004"
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-03-02"
+  last_modified: "2026-03-02"
+  version: "1.0"
+  status: "active"
+---

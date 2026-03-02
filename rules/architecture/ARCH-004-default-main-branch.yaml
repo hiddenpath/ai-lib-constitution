@@ -1,0 +1,74 @@
+---
+rule_id: "ARCH-004"
+title: "Default Branch Naming — Use `main`, Not `master`"
+category: "architecture"
+severity: "high"
+priority: 2
+languages: []  # Applies to all languages and repositories
+
+applicable_projects:
+  - "ai-protocol"
+  - "ai-lib-rust"
+  - "ai-lib-python"
+  - "ai-lib-ts"
+  - "ai-protocol-mock"
+  - "ai-mcp-model-switcher"
+  - "ai-lib-constitution"
+  - "ai-lib-plans"
+
+description: |
+  The canonical default branch for all ai-lib ecosystem repositories is `main`.
+  Do not use `master` as default branch in any docs, scripts, CI configuration,
+  release automation, or operational runbooks.
+
+core_principle: |
+  "Single default branch name across ecosystem: main"
+
+requirements:
+  - "Repository default branch MUST be `main`"
+  - "PR base branch MUST target `main`"
+  - "Automation scripts and release commands MUST reference `main`"
+  - "Documentation examples MUST use `main` and never imply `master` default"
+
+violations_to_avoid:
+  type: "text_or_config_pattern"
+  patterns:
+    - "master as default branch"
+    - "git push origin master"
+    - "PR base: master"
+    - "branch protection configured only for master"
+
+correct_implementation:
+  language: "shell"
+  example: |
+    # CORRECT
+    git checkout main
+    git pull origin main
+    git push origin main
+
+incorrect_implementation:
+  language: "shell"
+  example: |
+    # INCORRECT
+    git checkout master
+    git push origin master
+
+validation:
+  - type: "repository_settings_review"
+    check: "Default branch in remote settings is `main`"
+
+  - type: "docs_and_script_review"
+    check: "No branch-default instructions reference `master`"
+
+references:
+  related_rules:
+    - "ARCH-003"  # Cross-runtime consistency
+    - "DOC-001"   # Documentation standards
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-03-02"
+  last_modified: "2026-03-02"
+  version: "1.0"
+  status: "active"
+---
