@@ -57,7 +57,11 @@
 #
 ---
 
-## Quick Reference
+## Workspace Requirement
+
+**All ai-lib ecosystem work must have ai-lib-constitution and ai-lib-plans in the workspace.**  
+Each project includes `.cursor/rules/ai-lib-constraint.mdc` (alwaysApply) to enforce this.  
+See [docs/WORKSPACE_SETUP.md](docs/WORKSPACE_SETUP.md) for setup and verification steps.
 
 ### Agent Identity & Checklists
 - **[SOUL.md](SOUL.md)** — Agent persona and principles
