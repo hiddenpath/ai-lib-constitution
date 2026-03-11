@@ -1,0 +1,74 @@
+---
+rule_id: "GO-002"
+title: "Go Error Handling — Wrapping and Protocol Code Mapping"
+category: "coding"
+language: "go"
+severity: "critical"
+priority: 1
+
+applicable_projects:
+  - "ai-lib-go"
+
+description: |
+  Use explicit error checking and wrapping. Map internal errors to standard
+  AI-Protocol error codes (E1001-E9999). 使用显式错误检查和包装、将内部错误映射到标准协议错误码。
+
+core_principle: |
+  "Errors are values; handle them explicitly and provide context"
+
+requirements:
+  - "Check errors immediately after the call"
+  - "Use fmt.Errorf with %w to wrap errors"
+  - "Implement Error() string and Unwrapping"
+  - "Support AI-Protocol error codes for public API errors"
+
+forbidden_patterns:
+  - type: "Panic for control flow"
+    alternative: "Return error instead"
+    reason: "Panic in Go is for unrecoverable system failures only"
+
+  - type: "Silent error ignoring (_ = ...)"
+    alternative: "Handle or return the error"
+    reason: "Hidden failures lead to inconsistent state"
+
+correct_implementation:
+  example: |
+    // Error defines the structured error for ai-lib-go.
+    type Error struct {
+    	Code    string
+    	Message string
+    	Err     error
+    }
+
+    func (e *Error) Error() string {
+    	return fmt.Sprintf("[%s] %s: %v", e.Code, e.Message, e.Err)
+    }
+
+    func (e *Error) Unwrap() error {
+    	return e.Err
+    }
+
+    // Usage example
+    func (c *Client) Chat(ctx context.Context, req *Request) (*Response, error) {
+    	resp, err := c.httpClient.Do(req.toHTTPRequest())
+    	if err != nil {
+    		return nil, &Error{
+    			Code:    "E1003",
+    			Message: "HTTP request failed",
+    			Err:     fmt.Errorf("do request: %w", err),
+    		}
+    	}
+    	// ...
+    }
+
+validation:
+  - type: "linter"
+    tool: "golangci-lint"
+    checks:
+      - "errcheck"
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-03-12"
+  version: "1.0"
+  status: "active"

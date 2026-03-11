@@ -1,0 +1,77 @@
+---
+rule_id: "GO-001"
+title: "Go Coding Standards — Standard Library First and Idiomatic Patterns"
+category: "coding"
+language: "go"
+severity: "high"
+priority: 1
+
+applicable_projects:
+  - "ai-lib-go"
+
+description: |
+  Follow idiomatic Go patterns: clear naming, standard project layout,
+  and minimal external dependencies. 遵循 Go 惯用法：清晰命名、标准项目布局及最少外部依赖。
+
+core_principle: |
+  "Simple, readable, and standard library-first Go implementation"
+
+requirements:
+  - "Naming: Use camelCase for variables/functions, PascalCase for exported identifiers"
+  - "Package Layout: Use cmd/, pkg/, internal/, and api/ structure"
+  - "Dependencies: Prioritize standard library (net/http, encoding/json, context)"
+  - "Documentation: English docstrings with a single Chinese summary line in module header"
+  - "Interface: Implicit interfaces, keep them small"
+
+forbidden_patterns:
+  - type: "Relative imports"
+    alternative: "Use absolute module paths"
+    reason: "Breaks standard Go tooling and modules"
+
+  - type: "Global mutable state"
+    alternative: "Inject dependencies via struct or context"
+    reason: "Reduces testability and causes race conditions"
+
+correct_implementation:
+  example: |
+    // Package provider implements AI-Protocol manifest loading.
+    // provider 包实现 AI-Protocol manifest 加载。
+    package provider
+
+    import (
+    	"context"
+    	"encoding/json"
+    	"fmt"
+    	"os"
+    )
+
+    // Manifest represents a provider configuration.
+    type Manifest struct {
+    	ID      string `json:"id"`
+    	Version string `json:"version"`
+    }
+
+    // Loader handles manifest retrieval.
+    type Loader struct {
+    	basePath string
+    }
+
+    // Load reads a manifest from the given path.
+    func (l *Loader) Load(ctx context.Context, id string) (*Manifest, error) {
+    	// Implementation...
+    	return nil, nil
+    }
+
+validation:
+  - type: "linter"
+    tool: "golangci-lint"
+    checks:
+      - "gofmt"
+      - "govet"
+      - "staticcheck"
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-03-12"
+  version: "1.0"
+  status: "active"

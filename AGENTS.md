@@ -7,9 +7,9 @@
 
 ## Before Making Code Changes
 
-- [ ] **Load applicable rules**: Filter `rules/` by project and language (ARCH-*, RUST-*, PY-*, TS-*)
+- [ ] **Load applicable rules**: Filter `rules/` by project and language (ARCH-*, RUST-*, PY-*, TS-*, GO-*)
 - [ ] **Check MEMORY.md**: Read `ai-lib-plans/MEMORY.md` for durable decisions and conventions
-- [ ] **Verify scope**: Confirm which projects are affected (ai-protocol, ai-lib-rust, ai-lib-python, ai-lib-ts, ai-protocol-mock)
+- [ ] **Verify scope**: Confirm which projects are affected (ai-protocol, ai-lib-rust, ai-lib-python, ai-lib-ts, ai-lib-go, ai-protocol-mock)
 - [ ] **Confirm branch default naming**: Use `main` as canonical default branch (ARCH-004), never `master` as default
 - [ ] **Confirm document privacy boundary**: Internal work docs (discussion/plan/report/summary) must not be pushed to public repos (DOC-002)
 
@@ -17,7 +17,7 @@
 
 ## After Making Code Changes
 
-- [ ] **Run linters**: rustfmt/clippy (Rust), ruff/mypy (Python), eslint (TypeScript)
+- [ ] **Run linters**: rustfmt/clippy (Rust), ruff/mypy (Python), eslint (TypeScript), golangci-lint (Go)
 - [ ] **Run tests**: Unit tests + compliance tests where applicable
 - [ ] **Reference rule IDs**: When reporting violations, use `[RULE-ID] Message` format
 - [ ] **Update docs**: If API or behavior changed, update README and type hints. Follow DOC-001: English code docs + Chinese module header; internal docs in Chinese.
@@ -28,7 +28,7 @@
 
 - [ ] **Validate against schema**: Use ai-protocol schemas (provider.json, capabilities.json, etc.)
 - [ ] **Run compliance tests**: `ai-protocol/tests/compliance/`
-- [ ] **Check all runtimes**: Ensure Rust, Python, TS still pass with updated manifest
+- [ ] **Check all runtimes**: Ensure Rust, Python, TS, Go still pass with updated manifest
 
 ---
 

@@ -1,0 +1,32 @@
+---
+rule_id: "GO-004"
+title: "Go Testing and Compliance — Parity and Fixture Validation"
+category: "testing"
+language: "go"
+severity: "high"
+priority: 2
+
+applicable_projects:
+  - "ai-lib-go"
+
+description: |
+  Ensure Go runtime passes all AI-Protocol compliance tests and maintains
+  feature parity with other runtimes. 确保 Go 运行时通过所有协议合规性测试，并与其他运行时保持功能对齐。
+
+requirements:
+  - "Use standard 'testing' package for unit tests"
+  - "Implement a compliance test runner using ai-protocol fixtures"
+  - "Maintain >85% test coverage for core business logic"
+  - "Use Table-Driven Tests for complex logic"
+
+validation:
+  - type: "test"
+    tool: "go test ./..."
+  - type: "compliance"
+    check: "Run against ai-protocol compliance suite"
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-03-12"
+  version: "1.0"
+  status: "active"
