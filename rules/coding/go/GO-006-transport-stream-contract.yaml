@@ -1,0 +1,53 @@
+---
+rule_id: "GO-006"
+title: "Go Transport and Streaming Contract — Endpoint, Method, and Event determinism"
+category: "coding"
+language: "go"
+severity: "high"
+priority: 2
+
+applicable_projects:
+  - "ai-lib-go"
+  - "ai-protocol-mock"
+
+description: |
+  ai-lib-go transport behavior (endpoint resolution, HTTP methods, auth headers, stream decoding)
+  must be deterministic and aligned with ai-protocol compliance fixtures.
+
+core_principle: |
+  "Same manifest + same input => same transport/event semantics"
+
+requirements:
+  - "Endpoint resolution must prioritize manifest-declared operation mapping."
+  - "Missing operation mapping must use explicit documented fallback paths."
+  - "Auth header name/prefix derivation must come from manifest, not hardcoded provider defaults."
+  - "Streaming decoder format must follow manifest decoder strategy and remain deterministic."
+  - "Advanced capability APIs (mcp/computer_use/reasoning/video) must fail fast when undeclared."
+
+forbidden_patterns:
+  - type: "Ad-hoc endpoint concatenation by operation name"
+    alternative: "Resolve via EndpointFor() and validated fallback table"
+    reason: "Leads to runtime drift and hidden incompatibility"
+
+  - type: "Best-effort decode that swallows malformed stream events"
+    alternative: "Emit structured stream errors or fail fast"
+    reason: "Breaks observability and consistency guarantees"
+
+validation:
+  - type: "unit_test"
+    tool: "go test ./pkg/ailib -v"
+  - type: "compliance"
+    tool: "go test ./tests/compliance -v"
+    check: "stream/event/advanced-capability transport cases pass"
+
+related_rules:
+  - "ARCH-002"
+  - "ARCH-003"
+  - "GO-003"
+  - "GO-004"
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-03-15"
+  version: "1.0"
+  status: "active"

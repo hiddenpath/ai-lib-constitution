@@ -76,10 +76,12 @@ See [docs/WORKSPACE_SETUP.md](docs/WORKSPACE_SETUP.md) for setup and verificatio
 - **Rust**: See `rules/coding/rust/`
 - **Python**: See `rules/coding/python/`
 - **TypeScript**: See `rules/coding/typescript/`
+- **Go**: See `rules/coding/go/`
 
 ### Validation Standards
 - All runtimes must pass compliance tests for AI-Protocol
-- Linting: rustfmt/clippy (Rust), ruff/mypy (Python), eslint (TypeScript)
+- Linting: rustfmt/clippy (Rust), ruff/mypy (Python), eslint (TypeScript), golangci-lint (Go)
+- Runtime tests: `cargo test`, `pytest`, `npm test`, `go test ./...`
 - Test coverage: Minimum 80% for public APIs
 
 ### Documentation Standards
@@ -97,6 +99,7 @@ See [docs/WORKSPACE_SETUP.md](docs/WORKSPACE_SETUP.md) for setup and verificatio
 | ai-lib-rust | Rust runtime implementation | Rust |
 | ai-lib-python | Python runtime implementation | Python |
 | ai-lib-ts | TypeScript runtime implementation | TypeScript/JavaScript |
+| ai-lib-go | Go runtime implementation | Go |
 | ai-protocol-mock | Mock server for testing | Python |
 
 ## Rules Index
@@ -129,6 +132,17 @@ See [docs/WORKSPACE_SETUP.md](docs/WORKSPACE_SETUP.md) for setup and verificatio
 | TS-002 | Type safety | critical |
 | TS-003 | Error handling | high |
 
+### Go Rules
+| Rule ID | Topic | Priority |
+|---------|-------|----------|
+| GO-001 | Coding standards | high |
+| GO-002 | Error handling and protocol code mapping | critical |
+| GO-003 | Concurrency and context safety | high |
+| GO-004 | Testing and compliance parity | high |
+| GO-005 | Manifest/schema compatibility | critical |
+| GO-006 | Transport and streaming contract | high |
+| GO-007 | Release and module governance | high |
+
 ### Documentation Rules
 | Rule ID | Topic | Priority |
 |---------|-------|----------|
@@ -137,6 +151,6 @@ See [docs/WORKSPACE_SETUP.md](docs/WORKSPACE_SETUP.md) for setup and verificatio
 ---
 
 **Version**: 1.0.0
-**Last Updated**: 2026-02-27
+**Last Updated**: 2026-03-15
 **Maintainer**: ai-lib team
 **Purpose**: AI agent executable rules for ai-lib ecosystem development

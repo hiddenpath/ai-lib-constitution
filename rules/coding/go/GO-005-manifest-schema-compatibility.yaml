@@ -1,0 +1,54 @@
+---
+rule_id: "GO-005"
+title: "Go Manifest/Schema Compatibility — V2-first with explicit compatibility boundaries"
+category: "coding"
+language: "go"
+severity: "critical"
+priority: 1
+
+applicable_projects:
+  - "ai-lib-go"
+  - "ai-protocol"
+
+description: |
+  ai-lib-go MUST parse current ai-protocol manifests (v2 provider schema, capability_profile)
+  without runtime-specific hardcoded provider branches. Support policy is v2-first with explicit
+  v1 fallback where contractually required.
+
+core_principle: |
+  "Schema-driven behavior, not provider-specific branching"
+
+requirements:
+  - "Protocol loader must recognize v2 manifests using protocol_version and structured fields."
+  - "Manifest endpoint/auth/capabilities fields must follow ai-protocol v2 layout."
+  - "capability_profile phase boundaries must be validated (ios_v1 / iospc_v1)."
+  - "v1 fallback logic must be explicit, deterministic, and test-covered."
+  - "Any compatibility breaks must include rollback notes and compliance evidence."
+
+forbidden_patterns:
+  - type: "Manifest parsing via provider-id if/else trees"
+    alternative: "Parse by schema fields and typed structures"
+    reason: "Breaks protocol-driven architecture and cross-runtime consistency"
+
+  - type: "Silent fallback from invalid v2 to v1"
+    alternative: "Fail fast with explicit manifest validation error"
+    reason: "Masks protocol drift and increases production risk"
+
+validation:
+  - type: "test"
+    tool: "go test ./..."
+  - type: "compliance"
+    tool: "go test ./tests/compliance -v"
+    check: "protocol_loading and capability_profile boundary cases pass"
+
+related_rules:
+  - "ARCH-001"
+  - "ARCH-003"
+  - "GO-004"
+  - "TEST-001"
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-03-15"
+  version: "1.0"
+  status: "active"

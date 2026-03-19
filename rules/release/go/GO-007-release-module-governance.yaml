@@ -1,0 +1,53 @@
+---
+rule_id: "GO-007"
+title: "Go Release and Module Governance — Tag, retract, and proxy correctness"
+category: "release"
+language: "go"
+severity: "high"
+priority: 2
+
+applicable_projects:
+  - "ai-lib-go"
+  - "ai-lib-plans"
+
+description: |
+  Go runtime releases must keep module and tag governance auditable: semantic versioning,
+  retract policy for accidental tags, and evidence-backed release records.
+
+core_principle: |
+  "Releases are contracts; every correction must be explicit and traceable"
+
+requirements:
+  - "Use semantic version tags and keep changelog/release notes aligned."
+  - "If a bad version is published, prefer retract in go.mod over history rewrite."
+  - "Release records in ai-lib-plans must include executor identity and terminal evidence."
+  - "Cross-runtime matrix updates must include ai-lib-go version status explicitly."
+  - "Go proxy installability must be validated for release candidates."
+
+forbidden_patterns:
+  - type: "Force-push/retag to hide release mistakes"
+    alternative: "Publish corrective release + retract metadata"
+    reason: "Destroys auditability and breaks downstream module consumers"
+
+  - type: "Untracked release actions outside plans/tasks"
+    alternative: "Record execution evidence in ai-lib-plans task chain"
+    reason: "Violates governance traceability requirements"
+
+validation:
+  - type: "release_check"
+    checks:
+      - "go.mod contains retract entries when corrections are required"
+      - "tag/release notes align with changelog and plans records"
+      - "go list -m <module>@<tag> is resolvable after release"
+
+related_rules:
+  - "ARCH-003"
+  - "DOC-002"
+  - "GO-004"
+  - "task-executor-terminal"
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-03-15"
+  version: "1.0"
+  status: "active"

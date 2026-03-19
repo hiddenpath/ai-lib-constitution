@@ -11,9 +11,10 @@ applicable_projects:
   - "ai-lib-rust"
   - "ai-lib-python"
   - "ai-lib-ts"
+  - "ai-lib-go"
 
 description: |
-  All runtimes (Rust, Python, TypeScript) MUST exhibit the same behavior
+  All runtimes (Rust, Python, TypeScript, Go) MUST exhibit the same behavior
   for the same input when using the same provider manifest.
 
 core_principle: |
@@ -76,6 +77,10 @@ compliance_test_execution:
     npm run test:compliance
     ENV: COMPLIANCE_DIR=../ai-protocol/tests/compliance
 
+  go: |
+    go test ./tests/compliance -v
+    ENV: COMPLIANCE_DIR=../ai-protocol/tests/compliance
+
 error_code_alignment:
   error_code_schema: |
     E1XXX: Client errors (4xx)
@@ -108,7 +113,6 @@ error_code_alignment:
 retry_semantics:
   retryable_errors:
     - "E2001: rate_limited"
-    - "E2002: quota_exhausted"
     - "E3001: server_error"
     - "E3002: overloaded"
     - "E3003: timeout"
@@ -120,6 +124,7 @@ retry_semantics:
     - "E1003: permission_denied"
     - "E1004: not_found"
     - "E1005: request_too_large"
+    - "E2002: quota_exhausted"
     - "E4002: cancelled"
     - "E9999: unknown"
 
@@ -141,7 +146,7 @@ validation_checklist:
     verification: "grep -r 'E1.*E2.*E3.*E4.*E9999' in all runtime source"
 
   - id: "ARCH-003-03"
-    check: "Compliance tests pass for all runtimes"
+    check: "Compliance tests pass for all four runtimes"
     verification: "Run test suite and verify 100% pass rate"
 
   - id: "ARCH-003-04"
@@ -162,8 +167,9 @@ migration_guide:
     3. "Implement in ai-lib-rust"
     4. "Implement in ai-lib-python"
     5. "Implement in ai-lib-ts"
-    6. "Add compliance test case for new event"
-    7. "Verify all runtimes pass test"
+    6. "Implement in ai-lib-go"
+    7. "Add compliance test case for new event"
+    8. "Verify all runtimes pass test"
 
 when: "Adding new provider manifest"
   steps:
@@ -184,6 +190,6 @@ references:
 metadata:
   author: "ai-lib team"
   created: "2026-02-27"
-  last_modified: "2026-02-27"
-  version: "1.0"
+  last_modified: "2026-03-15"
+  version: "1.1"
   status: "active"
