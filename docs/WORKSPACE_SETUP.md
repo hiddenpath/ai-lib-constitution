@@ -35,6 +35,7 @@
     { "path": "d:\\rustapp\\ai-lib-python" },
     { "path": "d:\\rustapp\\ai-lib-ts" },
     { "path": "d:\\rustapp\\ai-lib-go" },
+    { "path": "d:\\rustapp\\ai-lib-benchmark" },
     { "path": "d:\\rustapp\\ai-protocol-mock" }
   ]
 }
@@ -64,6 +65,7 @@
 | ai-lib-python | `.cursor/rules/ai-lib-constraint.mdc` |
 | ai-lib-ts | `.cursor/rules/ai-lib-constraint.mdc` |
 | ai-lib-go | `.cursor/rules/ai-lib-constraint.mdc` |
+| ai-lib-benchmark | `.cursor/rules/ai-lib-constraint.mdc` |
 | ai-protocol-mock | `.cursor/rules/ai-lib-constraint.mdc` |
 | aidebate | `.cursor/rules/ai-lib-constraint.mdc` |
 | aidebate-python | `.cursor/rules/ai-lib-constraint.mdc` |

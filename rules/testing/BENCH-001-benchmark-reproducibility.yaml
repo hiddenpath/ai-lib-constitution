@@ -1,0 +1,53 @@
+---
+rule_id: "BENCH-001"
+title: "Benchmark Reproducibility and Baseline Governance"
+category: "testing"
+severity: "high"
+priority: 2
+languages: []  # applies to cross-language benchmark workflows
+
+applicable_projects:
+  - "ai-lib-benchmark"
+  - "ai-lib-rust"
+  - "ai-lib-python"
+  - "ai-lib-ts"
+  - "ai-lib-go"
+
+description: |
+  Benchmark results used for engineering decisions MUST be reproducible, traceable,
+  and comparable across runtimes. Any baseline update must include execution context
+  and raw artifacts.
+
+core_principle: |
+  "No benchmark claim without reproducible evidence"
+
+requirements:
+  - "Benchmark scripts must be committed in repository (no ad-hoc local-only commands)."
+  - "Each benchmark record must include target, duration, concurrency, timestamp, and runtime."
+  - "Baseline files must define regression thresholds (soft warning / hard fail)."
+  - "Cross-runtime comparisons must use aligned workload and API format assumptions."
+  - "CI or local reports must retain raw JSON artifacts for audit."
+
+forbidden_patterns:
+  - type: "Publishing only screenshots without raw result files"
+    reason: "Prevents regression verification and reproducibility"
+  - type: "Changing benchmark parameters between runtimes without explicit annotation"
+    reason: "Invalidates cross-runtime comparison"
+
+validation:
+  - type: "checklist"
+    checks:
+      - "raw result artifacts exist"
+      - "analysis report references exact source files"
+      - "baseline threshold values are present"
+
+related_rules:
+  - "ARCH-003"
+  - "TEST-001"
+  - "DOC-002"
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-03-19"
+  version: "1.0"
+  status: "active"

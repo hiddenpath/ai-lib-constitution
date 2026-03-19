@@ -100,6 +100,7 @@ See [docs/WORKSPACE_SETUP.md](docs/WORKSPACE_SETUP.md) for setup and verificatio
 | ai-lib-python | Python runtime implementation | Python |
 | ai-lib-ts | TypeScript runtime implementation | TypeScript/JavaScript |
 | ai-lib-go | Go runtime implementation | Go |
+| ai-lib-benchmark | Cross-runtime benchmark toolkit | Multi-language |
 | ai-protocol-mock | Mock server for testing | Python |
 
 ## Rules Index
@@ -147,6 +148,11 @@ See [docs/WORKSPACE_SETUP.md](docs/WORKSPACE_SETUP.md) for setup and verificatio
 | Rule ID | Topic | Priority |
 |---------|-------|----------|
 | DOC-001 | Code docs: English + Chinese module header | high |
+
+### Benchmark Rules
+| Rule ID | Topic | Priority |
+|---------|-------|----------|
+| BENCH-001 | Benchmark reproducibility and baseline governance | high |
 
 ---
 
