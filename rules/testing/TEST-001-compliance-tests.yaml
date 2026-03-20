@@ -195,9 +195,9 @@ troubleshooting:
     action: "Add proper synchronization or determinism"
 
 references:
-  compliance_tests: "https://github.com/hiddenpath/ai-protocol/tree/main/tests/compliance"
-  cross_runtime_doc: "https://github.com/hiddenpath/ai-protocol/blob/main/docs/CROSS_RUNTIME.md"
-  mock_server: "https://github.com/hiddenpath/ai-protocol-mock"
+  compliance_tests: "https://github.com/ailib-official/ai-protocol/tree/main/tests/compliance"
+  cross_runtime_doc: "https://github.com/ailib-official/ai-protocol/blob/main/docs/CROSS_RUNTIME.md"
+  mock_server: "https://github.com/ailib-official/ai-protocol-mock"
   related_rules:
     - "ARCH-003"  # Cross-runtime consistency
     - "RUST-001"  # Error handling

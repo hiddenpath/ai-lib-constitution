@@ -1,0 +1,73 @@
+---
+rule_id: "TEST-002"
+title: "Public URL Reference Hygiene"
+category: "testing"
+severity: "high"
+priority: 2
+languages: []  # cross-language, cross-repository governance rule
+
+applicable_projects:
+  - "ai-protocol"
+  - "ai-lib-rust"
+  - "ai-lib-python"
+  - "ai-lib-ts"
+  - "ai-lib-go"
+  - "ai-protocol-mock"
+  - "spiderswitch"
+  - "zerospider"
+  - "ailib.info"
+
+description: |
+  Public-facing repository URLs in docs, examples, and runtime fetch endpoints
+  MUST point to the official organization (ailib-official). Hiddenpath links are
+  allowed only for internal development wiring (for example, selected CI checkout
+  jobs and module identity paths explicitly documented as exceptions).
+
+core_principle: |
+  "Public links must resolve to official public sources"
+
+required_checks:
+  - "PR CI must run URL hygiene scan on changed files."
+  - "Scan must fail when hiddenpath public URL patterns are detected."
+  - "Exceptions must be explicit and path-scoped."
+
+forbidden_public_patterns:
+  - "https://github.com/hiddenpath/"
+  - "https://raw.githubusercontent.com/hiddenpath/"
+  - "https://api.github.com/repos/hiddenpath/"
+
+allowed_exceptions:
+  - path_glob: ".github/workflows/**"
+    reason: "Development organization checkout strategy may remain hiddenpath."
+  - path_glob: "**/go.mod"
+    reason: "Go module identity may remain stable until dedicated migration plan."
+
+ci_strategy:
+  workflow_name: "URL Reference Hygiene"
+  trigger:
+    - "pull_request"
+    - "push"
+  behavior:
+    - "Use ripgrep to detect forbidden patterns."
+    - "Print violating files and fail the job."
+    - "Optional manual autofix flow may open PRs with replacements."
+
+validation:
+  commands:
+    - "rg -n \"https://github.com/hiddenpath/|https://raw.githubusercontent.com/hiddenpath/|https://api.github.com/repos/hiddenpath/\" . --glob \"!.github/workflows/**\" --glob \"!**/go.mod\""
+  pass_condition: "No matches returned."
+
+references:
+  official_protocol_repo: "https://github.com/ailib-official/ai-protocol"
+  official_mock_repo: "https://github.com/ailib-official/ai-protocol-mock"
+  related_rules:
+    - "ARCH-003"
+    - "DOC-002"
+    - "TEST-001"
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-03-20"
+  version: "1.0"
+  status: "active"
+---

@@ -149,6 +149,12 @@ See [docs/WORKSPACE_SETUP.md](docs/WORKSPACE_SETUP.md) for setup and verificatio
 |---------|-------|----------|
 | DOC-001 | Code docs: English + Chinese module header | high |
 
+### Testing Rules
+| Rule ID | Topic | Priority |
+|---------|-------|----------|
+| TEST-001 | Cross-runtime compliance tests | critical |
+| TEST-002 | Public URL reference hygiene | high |
+
 ### Benchmark Rules
 | Rule ID | Topic | Priority |
 |---------|-------|----------|
@@ -157,6 +163,6 @@ See [docs/WORKSPACE_SETUP.md](docs/WORKSPACE_SETUP.md) for setup and verificatio
 ---
 
 **Version**: 1.0.0
-**Last Updated**: 2026-03-15
+**Last Updated**: 2026-03-20
 **Maintainer**: ai-lib team
 **Purpose**: AI agent executable rules for ai-lib ecosystem development

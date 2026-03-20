@@ -83,7 +83,7 @@ validation:
     requirement: "All runtimes must pass compliance tests with ANY provider manifest"
 
 references:
-  standard: "https://github.com/hiddenpath/ai-protocol/blob/main/docs/"
+  standard: "https://github.com/ailib-official/ai-protocol/blob/main/docs/"
   principle: "一切逻辑皆算子，一切配置皆协议"
   related_rules:
     - "ARCH-002"  # Operator-based architecture

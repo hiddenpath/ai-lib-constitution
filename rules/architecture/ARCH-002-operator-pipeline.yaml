@@ -201,7 +201,7 @@ unit_test_example:
     }
 
 references:
-  standard: "https://github.com/hiddenpath/ai-protocol/blob/main/docs/V2_ARCHITECTURE.md"
+  standard: "https://github.com/ailib-official/ai-protocol/blob/main/docs/V2_ARCHITECTURE.md"
   related_rules:
     - "ARCH-001"  # Protocol-driven design
     - "ARCH-003"  # Multi-language consistency

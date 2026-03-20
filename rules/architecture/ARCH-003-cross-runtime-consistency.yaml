@@ -180,8 +180,8 @@ when: "Adding new provider manifest"
     5. "Fix inconsistencies until all pass"
 
 references:
-  compliance_tests: "https://github.com/hiddenpath/ai-protocol/tree/main/tests/compliance"
-  cross_runtime_doc: "https://github.com/hiddenpath/ai-protocol/blob/main/docs/CROSS_RUNTIME.md"
+  compliance_tests: "https://github.com/ailib-official/ai-protocol/tree/main/tests/compliance"
+  cross_runtime_doc: "https://github.com/ailib-official/ai-protocol/blob/main/docs/CROSS_RUNTIME.md"
   related_rules:
     - "ARCH-001"  # Protocol-driven design
     - "ARCH-002"  # Operator-based architecture
