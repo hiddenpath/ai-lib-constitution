@@ -1,0 +1,128 @@
+---
+rule_id: "DOC-003"
+title: "Academic Papers Workflow Governance"
+category: "documentation"
+severity: "medium"
+priority: 3
+languages: ["latex", "markdown"]
+applicable_projects:
+  - "papers"
+description: |
+  学术论文从草稿到 arXiv 发布的工作流规范。
+  确保论文项目遵循 ai-lib 生态治理约束，包括文档语言、隐私边界和公开引用规范。
+
+core_principle: |
+  "论文内容公开，但内部讨论和决策过程保持私有"
+
+workflow_phases:
+  - phase: "source_normalization"
+    description: "术语和符号统一"
+    activities:
+      - "统一层命名和短标签"
+      - "解决符号冲突"
+      - "标准化拼写（如 AI-Native）"
+    output: "notes/normalization_decisions.md"
+  
+  - phase: "project_scaffolding"
+    description: "项目脚手架"
+    activities:
+      - "创建 main.tex 主文件"
+      - "按章节拆分为 sections/*.tex"
+      - "创建 figures/, bibliography/, notes/ 目录"
+    required_directories:
+      - "sections/"
+      - "figures/"
+      - "bibliography/"
+      - "notes/"
+  
+  - phase: "latex_conversion"
+    description: "核心 LaTeX 转换"
+    activities:
+      - "公式使用 equation 环境"
+      - "表格使用 booktabs 格式"
+      - "代码使用 listings 环境"
+      - "引用使用 \\cite{} 格式"
+  
+  - phase: "figure_preparation"
+    description: "图形准备"
+    activities:
+      - "矢量图导出为 PDF"
+      - "TikZ 图可嵌入或导出"
+      - "分辨率足够用于印刷"
+    output: "figures/*.pdf"
+  
+  - phase: "arxiv_packaging"
+    description: "arXiv 打包"
+    activities:
+      - "验证无 shell-escape 依赖"
+      - "验证无 minted 依赖"
+      - "包含所有 .tex 和引用文件"
+      - "本地编译测试通过"
+
+language_requirements:
+  code_comments: "English"
+  module_header: "Chinese summary line (one line)"
+  internal_notes: "Chinese"
+  paper_content: "English (for EN series)"
+
+privacy_boundary:
+  public_content:
+    - "Paper source files (.tex, .md)"
+    - "Bibliography files"
+    - "Figures"
+    - "Compiled PDF"
+    - "README_build.txt"
+  
+  private_content:
+    - "notes/execution_plan.md（内部执行计划）"
+    - "notes/normalization_decisions.md（内部决策）"
+    - "Discussion drafts not ready for public"
+  
+  rule_reference: "DOC-002"
+
+url_reference_hygiene:
+  rule: "TEST-002"
+  principle: "Public URLs must point to ailib-official"
+  applicable_to:
+    - "Bibliography URL fields"
+    - "Figure source references"
+    - "Code example links"
+  exceptions:
+    - "Internal development URLs in private notes"
+
+build_requirements:
+  compiler: "pdflatex"
+  prohibited_packages:
+    - "minted（需要 shell-escape）"
+  recommended_packages:
+    - "listings（代码高亮）"
+    - "tikz（矢量图形）"
+    - "booktabs（专业表格）"
+  
+  build_sequence:
+    - "pdflatex main.tex"
+    - "bibtex main"
+    - "pdflatex main.tex"
+    - "pdflatex main.tex"
+
+acceptance_criteria:
+  - "本地 pdflatex 编译成功"
+  - "所有 .tex 文件 UTF-8 编码"
+  - "figures/ 目录存在且包含所有引用图形"
+  - "无 hiddenpath 公开 URL（除非显式例外）"
+  - "内部笔记未上传公开分支"
+
+references:
+  related_rules:
+    - "DOC-001"
+    - "DOC-002"
+    - "TEST-002"
+  
+  arXiv_guidelines: "https://arxiv.org/help/submit"
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-03-28"
+  version: "1.0"
+  status: "active"
+---

@@ -9,7 +9,9 @@
 
 - [ ] **Load applicable rules**: Filter `rules/` by project and language (ARCH-*, RUST-*, PY-*, TS-*, GO-*)
 - [ ] **Check MEMORY.md**: Read `ai-lib-plans/MEMORY.md` for durable decisions and conventions
-- [ ] **Verify scope**: Confirm which projects are affected (ai-protocol, ai-lib-rust, ai-lib-python, ai-lib-ts, ai-lib-go, ai-protocol-mock)
+- [ ] **Governance priority check**: Treat `ai-lib-constitution` + `ai-lib-plans` as highest-priority governance for ai-lib ecosystem work
+- [ ] **Check reusable tools index**: Read `ai-lib-plans/tools/INDEX.md`; prefer existing tools before writing new scripts
+- [ ] **Verify scope**: Confirm which projects are affected (ai-protocol, ai-lib-rust, ai-lib-python, ai-lib-ts, ai-lib-go, ai-protocol-mock, ai-lib-benchmark)
 - [ ] **Confirm branch default naming**: Use `main` as canonical default branch (ARCH-004), never `master` as default
 - [ ] **Confirm document privacy boundary**: Internal work docs (discussion/plan/report/summary) must not be pushed to public repos (DOC-002)
 
@@ -21,6 +23,7 @@
 - [ ] **Run tests**: Unit tests + compliance tests where applicable
 - [ ] **Reference rule IDs**: When reporting violations, use `[RULE-ID] Message` format
 - [ ] **Update docs**: If API or behavior changed, update README and type hints. Follow DOC-001: English code docs + Chinese module header; internal docs in Chinese.
+- [ ] **Tooling persistence**: Reusable scripts/programs must be stored in `ai-lib-plans/tools/` and indexed in `ai-lib-plans/tools/INDEX.md`
 
 ---
 

@@ -22,6 +22,7 @@ All local work in this workspace is **constrained and supported** by:
 - Follow constitution rules; cite rule IDs when reporting violations
 - Use memory_get / memory_search skill to recall context
 - DOC-001: Code docs in English + Chinese module header; internal docs in Chinese
+- Reusable scripts/programs must be saved under `ai-lib-plans/tools/` and indexed in `ai-lib-plans/tools/INDEX.md`
 
 ## After Changes
 

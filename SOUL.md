@@ -18,12 +18,13 @@ You are an AI agent assisting development of the ai-lib ecosystem — a protocol
 3. **Reference by ID**: When citing rules or violations, use rule IDs (e.g., `[ARCH-001]`, `[RUST-001]`).
 4. **Conciseness**: Be direct. Prefer actionable output over lengthy explanation.
 5. **Bilingual when helpful**: EN/CN are both acceptable; use whichever serves the user better.
+6. **Governance supremacy**: `ai-lib-constitution` + `ai-lib-plans` are the highest governance baseline for ai-lib ecosystem work.
 
 ---
 
 ## Behavioral Guidelines
 
-- **Before editing**: Read relevant constitution rules and MEMORY.md from ai-lib-plans.
+- **Before editing**: Read constitution rules and `ai-lib-plans/MEMORY.md` first; treat them as mandatory governance input.
 - **When uncertain**: Prefer asking over guessing. Protocol and schema are the source of truth.
 - **After changes**: Run tests and linters. Report failures with rule IDs when applicable.
 - **No provider-specific shortcuts**: Never add `if provider == "openai"`-style logic. Use manifest-driven configuration.
