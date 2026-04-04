@@ -1,0 +1,77 @@
+---
+rule_id: "GOV-001"
+title: "Canonical development remote, official sync, and Rust workspace monorepo"
+category: "governance"
+severity: "high"
+priority: 1
+languages: []
+
+applicable_projects:
+  - "ai-lib-rust"
+  - "ai-lib-plans"
+  - "ai-protocol"
+  - "ai-lib-python"
+  - "ai-lib-ts"
+  - "ai-lib-go"
+  - "ai-lib-constitution"
+
+description: |
+  Day-to-day development and primary git push remote for team workflows use the
+  **hiddenpath** GitHub organization where applicable. Public-facing repository
+  URLs in **published** docs, crates.io metadata, and user-visible links MUST follow
+  **TEST-002** (ailib-official). Synchronization to **ailib-official** mirrors is
+  done via **PR/merge** (or equivalent reviewed promotion), with a **single
+  coherent URL strategy** per repository (avoid mixing hiddenpath and ailib-official
+  references in the same artifact class without an explicit exception).
+
+  The **ai-lib-rust** execution/contact/wasm crates remain a **single Cargo
+  workspace in one repository** until explicit split signals appear (independent
+  release cadence, separate owning teams, or CI isolation requirements). Physical
+  separation is achieved via workspace **crates**, not separate repos, unless
+  governance approves a migration.
+
+  **Internal-only repositories:** **ai-lib-constitution** and **ai-lib-plans** are
+  for **internal** team workflow (rules, tasks, memory). They MUST **never** be
+  pushed, mirrored, forked-as-official, or otherwise published to **ailib-official**
+  (no public mirror, no `git remote add` to ailib-official for promotion). Public
+  consumers and external CI have no business cloning these repos; only **hiddenpath**
+  (or equivalent private org) is the canonical remote.
+
+core_principles:
+  - "Develop and integrate on hiddenpath; promote to ailib-official through reviewed merges."
+  - "One URL story per surface: public docs → ailib-official; CI clone exceptions → documented in TEST-002."
+  - "Rust: one repo, multiple crates (core / contact / wasm / facade), not multiple repos by default."
+  - "ai-lib-constitution and ai-lib-plans stay internal: never promote them to ailib-official."
+
+requirements:
+  - "Default branch and PR flow follow ARCH-004 (`main`)."
+  - "When reconciling forks, prefer one consolidation commit or cherry-pick over leaving contradictory repository fields."
+  - "Stale remote branches that are fully superseded by merged PRs SHOULD be deleted after verification."
+  - "Do not split ai-lib-rust into separate Git repositories for core/contact/wasm without a recorded decision and migration plan."
+  - "MUST NOT add ailib-official as a push remote for ai-lib-constitution or ai-lib-plans; MUST NOT mirror those repositories to ailib-official."
+
+relationship_to_other_rules:
+  - "TEST-002: public URL hygiene (ailib-official in user-visible links)."
+  - "ARCH-003: cross-runtime consistency remains independent of which org hosts the clone."
+
+validation:
+  - type: "review_checklist"
+    items:
+      - "PR description states promotion path when touching repository or homepage fields."
+      - "No new hiddenpath URLs in README/Cargo.toml repository fields intended for crates.io consumers."
+      - "Confirm no ailib-official remote or mirror is introduced for ai-lib-constitution or ai-lib-plans."
+
+references:
+  related_rules:
+    - "TEST-002"
+    - "ARCH-004"
+    - "ARCH-003"
+    - "TEST-001"
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-04-03"
+  updated: "2026-04-03"
+  version: "1.1"
+  status: "active"
+---
