@@ -18,13 +18,16 @@ applicable_projects:
   - "ailib.info"
 
 description: |
-  Public-facing repository URLs in docs, examples, and runtime fetch endpoints
-  MUST point to the official organization (ailib-official). Hiddenpath links are
-  allowed only for internal development wiring (for example, selected CI checkout
-  jobs and module identity paths explicitly documented as exceptions).
+  All repository URLs in docs, examples, CI workflows, and runtime fetch
+  endpoints MUST point to the **ailib-official** organization. Since GOV-001 v2.0
+  ailib-official is the single canonical development org, there are no longer
+  workflow exceptions for hiddenpath CI checkouts. The only remaining hiddenpath
+  references should be in Go module paths (`go.mod`) until a dedicated module
+  migration is planned, and legacy backward-compatibility fallback paths in
+  runtime loader code (e.g. `node_modules/@hiddenpath/ai-protocol`).
 
 core_principle: |
-  "Public links must resolve to official public sources"
+  "All links must resolve to ailib-official public sources"
 
 required_checks:
   - "PR CI must run URL hygiene scan on changed files."
@@ -37,10 +40,10 @@ forbidden_public_patterns:
   - "https://api.github.com/repos/hiddenpath/"
 
 allowed_exceptions:
-  - path_glob: ".github/workflows/**"
-    reason: "Development organization checkout strategy may remain hiddenpath."
   - path_glob: "**/go.mod"
     reason: "Go module identity may remain stable until dedicated migration plan."
+  - path_glob: "**/loader.ts"
+    reason: "Legacy backward-compatible node_modules fallback paths for @hiddenpath/ai-protocol."
 
 ci_strategy:
   workflow_name: "URL Reference Hygiene"
@@ -54,7 +57,7 @@ ci_strategy:
 
 validation:
   commands:
-    - "rg -n \"https://github.com/hiddenpath/|https://raw.githubusercontent.com/hiddenpath/|https://api.github.com/repos/hiddenpath/\" . --glob \"!.github/workflows/**\" --glob \"!**/go.mod\""
+    - "rg -n \"https://github.com/hiddenpath/|https://raw.githubusercontent.com/hiddenpath/|https://api.github.com/repos/hiddenpath/\" . --glob \"!**/go.mod\" --glob \"!**/loader.ts\""
   pass_condition: "No matches returned."
 
 references:
@@ -64,10 +67,12 @@ references:
     - "ARCH-003"
     - "DOC-002"
     - "TEST-001"
+    - "GOV-001"
 
 metadata:
   author: "ai-lib team"
   created: "2026-03-20"
-  version: "1.0"
+  updated: "2026-04-06"
+  version: "2.0"
   status: "active"
 ---

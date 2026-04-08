@@ -1,6 +1,6 @@
 ---
 rule_id: "GOV-001"
-title: "Canonical development remote, official sync, and Rust workspace monorepo"
+title: "Canonical public org (ailib-official), internal repos on hiddenpath, Rust monorepo"
 category: "governance"
 severity: "high"
 priority: 1
@@ -16,13 +16,11 @@ applicable_projects:
   - "ai-lib-constitution"
 
 description: |
-  Day-to-day development and primary git push remote for team workflows use the
-  **hiddenpath** GitHub organization where applicable. Public-facing repository
-  URLs in **published** docs, crates.io metadata, and user-visible links MUST follow
-  **TEST-002** (ailib-official). Synchronization to **ailib-official** mirrors is
-  done via **PR/merge** (or equivalent reviewed promotion), with a **single
-  coherent URL strategy** per repository (avoid mixing hiddenpath and ailib-official
-  references in the same artifact class without an explicit exception).
+  **ailib-official** is the single canonical GitHub organization for all public
+  ai-lib code repositories. Day-to-day development, PRs, issues, CI, and
+  releases all happen directly on **ailib-official**. There is no separate
+  development mirror; the `hiddenpath` organization is **archived/read-only**
+  for public code repos (retained only for historical reference).
 
   The **ai-lib-rust** execution/contact/wasm crates remain a **single Cargo
   workspace in one repository** until explicit split signals appear (independent
@@ -31,35 +29,42 @@ description: |
   governance approves a migration.
 
   **Internal-only repositories:** **ai-lib-constitution** and **ai-lib-plans** are
-  for **internal** team workflow (rules, tasks, memory). They MUST **never** be
-  pushed, mirrored, forked-as-official, or otherwise published to **ailib-official**
-  (no public mirror, no `git remote add` to ailib-official for promotion). Public
-  consumers and external CI have no business cloning these repos; only **hiddenpath**
-  (or equivalent private org) is the canonical remote.
+  for **internal** team workflow (rules, tasks, memory). They remain on
+  **hiddenpath** (private) and MUST **never** be pushed, mirrored, or published
+  to **ailib-official**.
+
+  **Onboarding:** Agents and developers MUST repoint local `origin` for public
+  repos to `ailib-official/*` if still on `hiddenpath/*`. Operational steps live
+  in **ai-lib-plans** `docs/governance/REMOTE_MIGRATION.md` (kept in plans, not
+  duplicated in constitution).
 
 core_principles:
-  - "Develop and integrate on hiddenpath; promote to ailib-official through reviewed merges."
-  - "One URL story per surface: public docs → ailib-official; CI clone exceptions → documented in TEST-002."
+  - "All public development, CI, PRs, issues, and releases happen on ailib-official."
+  - "hiddenpath public code repos are archived/read-only; no new development there."
+  - "One URL story: all docs, metadata, registry links, and CI checkouts point to ailib-official."
   - "Rust: one repo, multiple crates (core / contact / wasm / facade), not multiple repos by default."
-  - "ai-lib-constitution and ai-lib-plans stay internal: never promote them to ailib-official."
+  - "ai-lib-constitution and ai-lib-plans stay internal on hiddenpath: never publish to ailib-official."
 
 requirements:
   - "Default branch and PR flow follow ARCH-004 (`main`)."
+  - "Local git `origin` for public repos MUST point to `ailib-official/<repo>`."
+  - "CI workflows that checkout sibling repos (ai-protocol, ai-protocol-mock, etc.) MUST use `ailib-official/<repo>` — no `hiddenpath/*` in `.github/workflows/**`."
   - "When reconciling forks, prefer one consolidation commit or cherry-pick over leaving contradictory repository fields."
   - "Stale remote branches that are fully superseded by merged PRs SHOULD be deleted after verification."
   - "Do not split ai-lib-rust into separate Git repositories for core/contact/wasm without a recorded decision and migration plan."
-  - "MUST NOT add ailib-official as a push remote for ai-lib-constitution or ai-lib-plans; MUST NOT mirror those repositories to ailib-official."
+  - "MUST NOT add ailib-official as a remote for ai-lib-constitution or ai-lib-plans; MUST NOT mirror those repositories to ailib-official."
 
 relationship_to_other_rules:
-  - "TEST-002: public URL hygiene (ailib-official in user-visible links)."
-  - "ARCH-003: cross-runtime consistency remains independent of which org hosts the clone."
+  - "TEST-002: public URL hygiene (ailib-official); narrow file-scoped exceptions (e.g. legacy loader paths) are defined there."
+  - "ARCH-003: cross-runtime consistency is independent of local clone path; public canonical org is fixed to ailib-official per this rule."
 
 validation:
   - type: "review_checklist"
     items:
-      - "PR description states promotion path when touching repository or homepage fields."
-      - "No new hiddenpath URLs in README/Cargo.toml repository fields intended for crates.io consumers."
+      - "No new hiddenpath URLs in README/Cargo.toml/package.json repository fields (see TEST-002 for scoped exceptions)."
+      - "CI workflows only reference ailib-official for cross-repo checkouts (protocol, mock, etc.)."
       - "Confirm no ailib-official remote or mirror is introduced for ai-lib-constitution or ai-lib-plans."
+      - "New clones follow REMOTE_MIGRATION.md in ai-lib-plans when origin still points at hiddenpath public repos."
 
 references:
   related_rules:
@@ -67,11 +72,12 @@ references:
     - "ARCH-004"
     - "ARCH-003"
     - "TEST-001"
+  operational_runbook: "ai-lib-plans/docs/governance/REMOTE_MIGRATION.md"
 
 metadata:
   author: "ai-lib team"
   created: "2026-04-03"
-  updated: "2026-04-03"
-  version: "1.1"
+  updated: "2026-04-06"
+  version: "2.1"
   status: "active"
 ---
