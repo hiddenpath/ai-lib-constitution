@@ -1,0 +1,93 @@
+---
+# 中文摘要：合并冲突时禁止整文件盲选一侧；按意图与协议对齐；PR 中说明取舍并审查安全边界；冲突落在执行路径上须跑相关单测/合规子集。
+rule_id: "GOV-002"
+title: "Merge conflict resolution discipline (no blind whole-file takeover)"
+category: "governance"
+severity: "high"
+priority: 2
+languages: []
+
+applicable_projects:
+  - "ai-lib-rust"
+  - "ai-lib-python"
+  - "ai-lib-ts"
+  - "ai-lib-go"
+  - "ai-protocol"
+  - "ai-protocol-mock"
+  - "ai-lib-constitution"
+  - "ai-lib-plans"
+
+description: |
+  When resolving git merge or rebase conflicts (including cherry-picks), contributors
+  MUST NOT optimize for speed by accepting an entire file from one side without
+  reading both sides. The goal is to **discard only obsolete or incorrect logic**
+  and **retain the more correct or better-aligned behavior** (protocol manifests,
+  cross-runtime parity per ARCH-003, documented proxy/trust_env semantics, compliance
+  subsets, and security-sensitive defaults).
+
+  **Mandatory practices (normative):**
+
+  1. **No whole-file "ours"/"theirs" without review** — Resolve at the smallest
+     meaningful unit (function, block, or config stanza). If a file must be taken
+     wholesale, the PR MUST explain why both sides were equivalent or why one side
+     was entirely superseded.
+
+  2. **Align intent before choosing** — Read task/PR description, CHANGELOG intent,
+     and protocol docs (`ai-protocol`, `CROSS_RUNTIME.md`, manifest fields). Prefer
+     behavior that matches the **canonical specification** and **Rust reference
+     implementation** when the conflict is runtime-parity related.
+
+  3. **Conflict resolution requires review** — Conflict fixes MUST land via PR (or
+     equivalent review) when more than one contributor touched the region. The PR
+     body MUST list: conflicted paths, what each side represented, and why the
+     merged result is correct. Reviewers MUST explicitly check for accidental loss
+     of **safety boundaries** (proxy / `trust_env` / `NO_PROXY`, compliance env vars,
+     auth, rate limits, error classification).
+
+  4. **Test when execution paths change** — If the conflict touches client,
+     pipeline, transport, protocol loading, or CI workflows, run the **narrowest
+     relevant** automated checks before merge (e.g. Python: affected unit tests +
+     `COMPLIANCE_SUBSET=e_only` when compliance is implicated; TypeScript: `npm run
+     typecheck` + `npm run test:core` or targeted tests; Rust: `cargo test` for
+     touched crates). Document what ran in the PR if full matrix is impractical.
+
+  Violations: merging conflict markers; silent deletion of tests or CI gates;
+  reintroducing `hiddenpath/*` checkout URLs in public repos (see GOV-001).
+
+core_principles:
+  - "Conflicts are a review gate, not a mechanical git operation."
+  - "Prefer explicit rationale in PR text over implicit file history."
+  - "Cross-runtime and protocol semantics beat local convenience."
+
+requirements:
+  - "MUST follow the four mandatory practices in description when resolving merge or rebase conflicts in applicable_projects."
+  - "SHOULD link ARCH-003 / TEST-001 evidence when conflict touches cross-runtime or compliance behavior."
+  - "MUST NOT commit files still containing conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`)."
+
+relationship_to_other_rules:
+  - "GOV-001: conflict resolution in workflows MUST preserve ailib-official checkout URLs."
+  - "ARCH-003: parity intent guides which side to prefer when both compile."
+  - "ARCH-004: default branch remains `main`; conflict resolution does not reintroduce `master` as default."
+  - "TEST-001: do not drop compliance hooks to silence failures without a recorded decision."
+
+validation:
+  - type: "review_checklist"
+    items:
+      - "PR for conflict resolution lists paths + rationale (per practice 3)."
+      - "No conflict markers in repository."
+      - "CI or documented local commands ran for touched execution paths (per practice 4)."
+
+references:
+  related_rules:
+    - "GOV-001"
+    - "ARCH-003"
+    - "ARCH-004"
+    - "TEST-001"
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-04-15"
+  updated: "2026-04-15"
+  version: "1.0"
+  status: "active"
+---

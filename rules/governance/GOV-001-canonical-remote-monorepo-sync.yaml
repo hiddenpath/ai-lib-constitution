@@ -55,6 +55,7 @@ requirements:
   - "MUST NOT add ailib-official as a remote for ai-lib-constitution or ai-lib-plans; MUST NOT mirror those repositories to ailib-official."
 
 relationship_to_other_rules:
+  - "GOV-002: merge conflict resolution MUST not reintroduce hiddenpath URLs in workflows or README repository fields."
   - "TEST-002: public URL hygiene (ailib-official); narrow file-scoped exceptions (e.g. legacy loader paths) are defined there."
   - "ARCH-003: cross-runtime consistency is independent of local clone path; public canonical org is fixed to ailib-official per this rule."
 

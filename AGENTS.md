@@ -18,6 +18,14 @@
 
 ---
 
+## Merge / Rebase Conflicts (GOV-002)
+
+When resolving **merge, rebase, or cherry-pick** conflicts in any public runtime or protocol repo:
+
+- [ ] **Load GOV-002** (`rules/governance/GOV-002-merge-conflict-resolution-discipline.yaml`): no blind whole-file ours/theirs; align intent with spec/tasks; PR notes list paths and rationale; run narrow tests for touched execution paths; preserve safety boundaries (proxy, trust_env, compliance CI).
+
+---
+
 ## After Making Code Changes
 
 - [ ] **Run linters**: rustfmt/clippy (Rust), ruff/mypy (Python), eslint (TypeScript), golangci-lint (Go)
