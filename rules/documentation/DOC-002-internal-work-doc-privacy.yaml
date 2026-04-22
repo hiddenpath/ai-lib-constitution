@@ -13,6 +13,7 @@ applicable_projects:
   - "ai-lib-ts"
   - "ai-protocol-mock"
   - "ai-mcp-model-switcher"
+  - "zerospider"
   - "ai-lib-constitution"
   - "ai-lib-plans"
 
@@ -21,33 +22,55 @@ description: |
   This includes discussion notes, plans, proposals, delivery reports, improvement reports,
   internal summaries, and other maintainer-only documents.
 
+  **Public-facing prose in public product repositories (additional scope).**  Text that is
+  part of the public record—commit messages, pull request titles and bodies, release notes,
+  and user-facing documentation in public branches—must not **leak internal workflow**:
+  do not name internal governance rule IDs, do not point to private-only repositories,
+  private paths, or other maintainer-only names (including internal “plans” that live
+  in private org tooling).  Say what changed in plain, technical language: behavior,
+  migration impact, how to build and test, and public links (canonical org URLs, public
+  issues) only.  Cross-check link targets with TEST-002 for repository and workflow fields.
+
 requirements:
   - "Internal discussion/planning/report/solution docs MUST stay in private repositories only"
   - "Do not commit internal work docs to public project repositories"
   - "If mistakenly committed, remove from public branch immediately and add ignore safeguards"
   - "Before push, review staged files for internal-work indicators (REPORT/SUMMARY/PLAN etc.)"
+  - "Commit messages, PR text, release notes, and user-facing docs on public product default branches MUST NOT reference internal rule IDs, private internal repo or document names, or other maintainer-only process vocabulary; describe the technical change and validation directly"
+  - "Public issues and changelogs MUST be understandable without access to any private planning or constitution repository; link only to public resources"
 
 violations_to_avoid:
-  type: "naming_and_location_pattern"
+  type: "internal_artifact_and_public_record_leak"
   patterns:
     - "PROJECT_SUMMARY.md in public repo"
     - "PROJECT_DELIVERY_REPORT.md in public repo"
     - "IMPROVEMENTS_REPORT.md in public repo"
     - "*INTERNAL*.md committed to public repo"
     - "discussion/plan/report docs stored alongside public runtime docs"
+    - "Commit or PR in a public product repo that cites internal rule IDs (e.g. GOV-*, DOC-*, TEST-*) in the public message"
+    - "User-visible doc in public repo that names private-only work repositories or internal task file paths as required reading"
+    - "PR body that requires reviewers to read content that exists only in a private planning repository"
 
 correct_implementation:
   language: "markdown"
   example: |
-    # CORRECT
-    - Internal planning and reports are stored in ai-lib-plans (private).
+    # CORRECT (artifact placement)
+    - Internal planning and reports are stored in the private work repository only.
     - Public repositories keep only user-facing technical docs.
+
+    # CORRECT (public commit / PR, same change)
+    - feat(providers): document AI_PROTOCOL_DIR and add docs contract test
+    - PR body: summary of file changes, `cargo test -p mycrate --test docs_contract_…`, link to public migration doc in-repo only.
 
 incorrect_implementation:
   language: "markdown"
   example: |
     # INCORRECT
     - Commit internal delivery reports directly into a public repository root.
+
+    # INCORRECT (public record)
+    - Commit message: "chore: align with GOV-001" on a public product default branch
+    - PR: "see the internal plans repo task only" as the only context for reviewers
 
 validation:
   - type: "pre-push_review"
@@ -56,15 +79,19 @@ validation:
   - type: "repo_hygiene"
     check: "Add .gitignore protections for known internal artifact names where needed"
 
+  - type: "public_merge_review"
+    check: "Before merge to a public product default branch: PR title/body and stacked commit messages do not reference internal rule IDs, private planning paths, or other maintainer-only names"
+
 references:
   related_rules:
     - "DOC-001"
     - "ARCH-004"
+    - "TEST-002"
 
 metadata:
   author: "ai-lib team"
   created: "2026-03-02"
-  last_modified: "2026-03-02"
-  version: "1.0"
+  last_modified: "2026-04-22"
+  version: "1.1"
   status: "active"
 ---
