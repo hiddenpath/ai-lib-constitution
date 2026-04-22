@@ -14,7 +14,7 @@
 - [ ] **Verify scope**: Confirm which projects are affected (ai-protocol, ai-lib-rust, ai-lib-python, ai-lib-ts, ai-lib-go, ai-protocol-mock, ai-lib-benchmark)
 - [ ] **Confirm branch default naming**: Use `main` as canonical default branch (ARCH-004), never `master` as default
 - [ ] **Confirm document privacy boundary**: Internal work docs (discussion/plan/report/summary) must not be pushed to public repos (DOC-002)
-- [ ] **Canonical remote (GOV-001 v2)**: All public repos live on `ailib-official`. Push/PR to `ailib-official/<repo>` directly. `hiddenpath` public code repos are archived/read-only. Only `ai-lib-constitution` and `ai-lib-plans` remain on `hiddenpath` (private).
+- [ ] **Canonical remote (GOV-001 v2)**: All public repos live on `ailib-official`. Push/PR to `ailib-official/<repo>` directly. `hiddenpath` public code repos are archived/read-only. `ai-lib-constitution`, `ai-lib-plans`, and **`papers`** (private) remain on `hiddenpath`; do **not** repoint `papers` to `ailib-official`.
 
 ---
 
