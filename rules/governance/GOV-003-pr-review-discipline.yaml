@@ -1,0 +1,116 @@
+---
+# 中文摘要：PR 审查的完整流程 —— 先检查 CI + 本地编译，再读 diff 做架构/安全审查，
+# 确认是否符合 ai-lib 治理规则，然后批准/合并或报告拒绝理由。合并后回填 plans。
+rule_id: "GOV-003"
+title: "PR review discipline — automated checks, code review, merge, and plans backfill"
+category: "governance"
+severity: "high"
+priority: 3
+languages: []
+
+applicable_projects:
+  - "ai-lib-rust"
+  - "ai-lib-python"
+  - "ai-lib-ts"
+  - "ai-lib-go"
+  - "ai-protocol"
+  - "ai-protocol-mock"
+  - "ai-lib-benchmark"
+  - "spiderswitch"
+  - "ailib-wasm-test"
+  - "zerospider"
+  - "aidebate"
+  - "ai-lib-constitution"
+  - "ai-lib-plans"
+
+description: |
+  This rule defines the complete PR review workflow for ai-lib ecosystem
+  repositories. Every PR that lands on `main` MUST pass through this pipeline
+  unless explicitly exempted (e.g. trivial dependabot-only lockfile changes
+  that pass CI with no manual review needed).
+
+  The pipeline has four phases:
+
+  **Phase 1 — Pre-review CI & local checks**
+  - Wait for GitHub Actions CI to complete. If still pending, check back.
+  - Run `cargo fmt --check` or equivalent language linter (rustfmt, ruff, eslint, golangci-lint).
+  - Run `cargo clippy -D warnings` or equivalent (zero warnings required for merge).
+  - Run `cargo test` for affected crates or `npm test` / `go test ./...`.
+  - For ai-protocol: run compliance test subset if applicable.
+
+  **Phase 2 — Code review (diff analysis)**
+  - Read the full diff. Check:
+    - **Architecture alignment**: Does the change follow ARCH-* rules (protocol-driven, operator pipeline, cross-runtime consistency)?
+    - **Security boundaries**: Are proxy / trust_env / auth / rate-limit / error-classification boundaries preserved?
+    - **Governance compliance**: No `hiddenpath` URLs in public repo code (GOV-001). No blind whole-file conflict resolution (GOV-002).
+    - **Breaking changes**: If semver-breaking (major bump, API change), is it documented in CHANGELOG and PR description?
+    - **Merge with ai-lib migration**: Does the change touch transport, connection, retry, or Provider trait? If yes, extra caution — review against ZS-ML migration plan.
+  - Also check for:
+    - Trivial/dangerous patterns: unsafes, unwrap/expect, panic, unsafe SQL, hardcoded secrets/keys.
+    - Test adequacy: do new tests cover both happy path and error cases?
+
+  **Phase 3 — Decision and merge**
+  - If all checks pass: approve, merge (squash or --no-ff to main), push.
+  - If any check fails:
+    - Document the blocking issue clearly in a review comment.
+    - Close/reject the PR with explanation, or mark as blocked with clear remediation path.
+  - Merge methods (in priority order):
+    1. `gh pr merge --squash` (preferred for single-commit PRs).
+    2. `git merge --no-ff` locally + push (fallback when PAT lacks mergePullRequest scope).
+    - *Always* use SSH remote (`git@github-ailib-official:ailib-official/<repo>.git`) or personal PAT for pushes to ailib-official.
+
+  **Phase 4 — Plans backfill**
+  - After merge, if the PR corresponds to a tracked task in `ai-lib-plans/active/projects/<project>/tasks/*.yaml`:
+    - Update `status` to `completed`.
+    - Fill `pr.merge_commit` with the merge commit SHA.
+    - Update `testing.evidence_on_complete` with CI/check results and PR URL.
+    - Write meaningful `completion_notes` summarizing the review outcome.
+  - Update `TASKS_INDEX.md` (or equivalent project index) with the new status and merge SHA.
+  - Commit and push to `hiddenpath/ai-lib-plans`.
+
+core_principles:
+  - "Every merge is a contract: the reviewer attests that CI, code quality, governance, and plans traceability are all satisfied."
+  - "Automated checks are a prerequisite, not a substitute, for human code review."
+  - "Plans backfill is not optional: without traceability, the task doesn't exist."
+  - "Dependabot PRs that pass CI with only Cargo.lock changes may skip Phase 2 at reviewer discretion, but all other PRs require full review."
+
+requirements:
+  - "MUST complete Phase 1 (CI + local checks) and Phase 2 (code review) before approving any non-trivial PR."
+  - "MUST check GOV-001 compliance (no hiddenpath URLs in public repos) on every PR touching workflow files, README, or Cargo.toml repository fields."
+  - "MUST backfill plans (Phase 4) within the same session as merge."
+  - "MUST use SSH remote (`git@github-ailib-official`) or appropriate PAT/PAT scope when pushing to ailib-official; HTTPS hiddenpath creds will 403."
+  - "SHOULD delete stale PR branches after merge when no longer needed."
+  - "SHOULD state blocking reasons in review comment format (not just close without explanation)."
+
+relationship_to_other_rules:
+  - "GOV-001: Phase 2 MUST scan for hiddenpath URLs in public repo workflows and config."
+  - "GOV-002: Phase 2 MUST verify no blind conflict resolution when merge conflict existed."
+  - "ARCH-003: Phase 2 MUST check cross-runtime consistency when the change touches protocol or transport."
+  - "TEST-001: Phase 1 MUST run compliance test subset when applicable."
+
+validation:
+  - type: "review_checklist"
+    items:
+      - "CI passed locally or on GitHub Actions before merge."
+      - "Linter (clippy/ruff/eslint/golangci-lint) zero warnings."
+      - "Full diff reviewed for security, architecture, and governance compliance."
+      - "PR description matches actual change and references task ID if applicable."
+      - "Plans backfilled with merge commit, evidence, and completion notes."
+      - "No hiddenpath URLs in workflows, README, or manifest files."
+
+references:
+  related_rules:
+    - "GOV-001"
+    - "GOV-002"
+    - "ARCH-003"
+    - "TEST-001"
+  operational_runbook: "ai-lib-plans/docs/governance/PR_REVIEW_FLOW.md"
+  memory_ref: "MEMORY.md §PR审查规则"
+
+metadata:
+  author: "Spider (ai-lib agent)"
+  created: "2026-04-30"
+  updated: "2026-04-30"
+  version: "1.0"
+  status: "active"
+---

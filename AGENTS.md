@@ -36,6 +36,35 @@ When resolving **merge, rebase, or cherry-pick** conflicts in any public runtime
 
 ---
 
+## PR Review Checklist (GOV-003)
+
+When reviewing an open PR for merge:
+
+### Phase 1 — Automated checks
+- [ ] **CI passed** (GitHub Actions / equivalent). Wait for pending if needed.
+- [ ] **Local linter**: `cargo fmt --check && cargo clippy -D warnings` (Rust) / equivalent
+- [ ] **Local tests**: `cargo test --features <affected_features>` or equivalent
+- [ ] **Repo check**: No `hiddenpath` URLs in workflows, README, or Cargo.toml (GOV-001)
+
+### Phase 2 — Code review
+- [ ] **Architecture**: Does diff follow ARCH-* rules (protocol-driven, pipeline, cross-runtime)?
+- [ ] **Safety**: No unsafe/unwrap/panic/hardcoded secrets. Auth/rate-limit/proxy boundaries preserved.
+- [ ] **ai-lib migration sensitive**: If touching transport/connection/Provider trait, review against ZS-ML plan.
+- [ ] **Breaking changes**: Documented in CHANGELOG + PR description?
+- [ ] **Test adequacy**: New tests cover happy + error paths?
+- [ ] **Conflict resolution**: If merge conflict existed, verify no blind whole-file ours/theirs (GOV-002)
+
+### Phase 3 — Decision
+- [ ] All checks pass → **approve + merge** (`gh pr merge --squash` or `git merge --no-ff` + push via SSH)
+- [ ] Any check fails → **document blocking issue**, close/reject or mark blocked
+
+### Phase 4 — Plans backfill
+- [ ] Update task YAML: `status: completed`, `pr.merge_commit`, `completion_notes`
+- [ ] Update TASKS_INDEX.md
+- [ ] Commit + push to `hiddenpath/ai-lib-plans`
+
+---
+
 ## Protocol / Manifest Changes
 
 - [ ] **Validate against schema**: Use ai-protocol schemas (provider.json, capabilities.json, etc.)
