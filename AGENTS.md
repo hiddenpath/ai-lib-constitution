@@ -54,9 +54,18 @@ When reviewing an open PR for merge:
 - [ ] **Test adequacy**: New tests cover happy + error paths?
 - [ ] **Conflict resolution**: If merge conflict existed, verify no blind whole-file ours/theirs (GOV-002)
 
+### Phase 2.5 — Publish review comments on PR (GOV-003 §2.5)
+- [ ] **Format**: Use standardized `REVIEW_TEMPLATE.md` format with `<!-- REVIEW_META: ... -->`
+- [ ] **Delivery**: `gh pr review {num} --repo ailib-official/{repo} --comment --body-file report.md`
+- [ ] **Machine-readable**: Issues table with `⏳` (needs fix) / `✅` (satisfied) status
+- [ ] **Defensive**: ⏳ only for items Cursor should fix; ✅ for satisfied observations
+- [ ] **Detailed**: Each 🔴/🟡 issue includes file path, line ref, problem description, and expected fix
+- [ ] **Anti-loop**: Never modify code files in the PR branch (Cursor handles that)
+
 ### Phase 3 — Decision
 - [ ] All checks pass → **approve + merge** (`gh pr merge --squash` or `git merge --no-ff` + push via SSH)
-- [ ] Any check fails → **document blocking issue**, close/reject or mark blocked
+- [ ] Any check fails → **document blocking issue in PR comment**, close/reject or mark blocked
+- [ ] **ready-for-spider detection**: If label is present, do final validation before merging
 
 ### Phase 4 — Plans backfill
 - [ ] Update task YAML: `status: completed`, `pr.merge_commit`, `completion_notes`

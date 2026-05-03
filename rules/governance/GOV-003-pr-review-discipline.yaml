@@ -22,6 +22,8 @@ applicable_projects:
   - "aidebate"
   - "ai-lib-constitution"
   - "ai-lib-plans"
+  - "webapp*"
+  - "ailib.info*"  # ailib.info 网站仓库也适用
 
 description: |
   This rule defines the complete PR review workflow for ai-lib ecosystem
@@ -48,6 +50,68 @@ description: |
   - Also check for:
     - Trivial/dangerous patterns: unsafes, unwrap/expect, panic, unsafe SQL, hardcoded secrets/keys.
     - Test adequacy: do new tests cover both happy path and error cases?
+
+  **Phase 2.5 — Spider review comments on PR (automated collaboration protocol)**
+
+  When Spider finds issues during Phase 2 review, comments MUST be posted
+directly on the GitHub Pull Request (not relayed through the chat), following
+the standardized review report format:
+
+  **Review comment format (per REVIEW_TEMPLATE.md):**
+  ```markdown
+  ## Review Report — {task-id} {description}
+
+  <!-- REVIEW_META: {"branch":"{BRANCH}","base":"{BASE}","head_sha":"{SHA}","depth":"deep","reviewer":"Spider","timestamp":"{TIMESTAMP}"} -->
+
+  ### Issues
+
+  | ID | Severity | File | Issue | Status | Priority |
+  |----|----------|------|-------|--------|----------|
+  | I1 | 🔴 | `{file}` | {description} | ⏳ | High |
+  | I2 | 🟡 | `{file}` | {description} | ⏳ | Medium |
+  | I3 | 🟢 | {observation} | ✅ | Low |
+
+  ... (detailed explanation for each issue with code references)
+
+  ### Fix Summary
+  | ID | Status | Fix |
+  |----|--------|-----|
+  | I1 | ⏳ | {expected fix} |
+
+  ### Validation Matrix
+  | Check | Status |
+  |-------|--------|
+  | cargo test / npm test / go test | ✅ pass |
+  ```
+
+  **Status semantics in review comments:**
+  - `⏳` = pending fix (Cursor Cloud Sandbox should work on these)
+  - `✅` = already satisfied / no action needed
+  - `🔄` = in progress (Cursor is actively working on this)
+
+  **Delivery method:** Spider publishes the review report via:
+  ```bash
+  gh pr review {number} --repo ailib-official/{repo} --comment --body-file /tmp/review_{repo}.md
+  ```
+
+  **Cursor Automation integration (Phase 2 enabled):**
+  - Cursor Cloud Sandbox monitors PR comments where body contains `## Review Report`
+    and `⏳` (pending fix entries). It pulls the PR, applies fixes only for `⏳`
+    items (skips `✅` items), then amends/pushes.
+  - After fixes, CI re-runs. When all checks pass, GitHub Actions may add
+    `ready-for-spider` label (via `verify-and-merge-gate.yml` or equivalent).
+  - Spider detects the label, performs final validation, and proceeds to merge.
+
+  **Defensive design (anti-loop):**
+  - `ready-for-spider` label prevents re-triggering the Cursor fix cycle.
+  - Spider merges skip verify-and-merge workflow via `if: github.actor != 'spider-bot'`.
+  - Maximum 3 iteration rounds; exceeding this marks the PR as `blocked` for manual intervention.
+  - Cursor only fixes `⏳` items, never `✅` items.
+
+  **Applicability:** This protocol applies to ALL ai-lib ecosystem PRs that
+  require code review (excludes trivial dependabot-only lockfile changes,
+  and excludes PRs where the constitution explicitly says "编码实现由 Cursor 负责，
+  Spider 不得修订编码，只能提出审查意见").
 
   **Phase 3 — Decision and merge**
   - If all checks pass: approve, merge (squash or --no-ff to main), push.
@@ -97,6 +161,10 @@ validation:
       - "PR description matches actual change and references task ID if applicable."
       - "Plans backfilled with merge commit, evidence, and completion notes."
       - "No hiddenpath URLs in workflows, README, or manifest files."
+      - "Review comments posted directly on GitHub PR (not relayed through chat) per standardized format."
+      - "Review comment uses REVIEW_META machine-readable metadata tag."
+      - "Coded problems marked ⏳, satisfied items marked ✅ (for Cursor Automation consumption)."
+      - "Blocking issues stated in the review comment, not just a PR close without explanation."
 
 references:
   related_rules:
@@ -110,7 +178,7 @@ references:
 metadata:
   author: "Spider (ai-lib agent)"
   created: "2026-04-30"
-  updated: "2026-04-30"
-  version: "1.0"
+  updated: "2026-05-03"
+  version: "2.0"
   status: "active"
 ---
