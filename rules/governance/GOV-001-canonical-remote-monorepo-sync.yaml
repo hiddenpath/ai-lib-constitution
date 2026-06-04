@@ -33,6 +33,13 @@ description: |
   **hiddenpath** (private) and MUST **never** be pushed, mirrored, or published
   to **ailib-official**.
 
+  **LAN Git (trial, GOV-004):** For in-scope private repos, day-to-day
+  collaboration uses internal remote **`lan`** (`git-server.local`). GitHub
+  **`origin`** on hiddenpath is retained for cold backup and CI (dual-remote
+  where GitHub Actions applies, e.g. **eos**). See GOV-004 and
+  `ai-lib-plans/docs/governance/LAN_GIT.md`. Do not delete or archive
+  hiddenpath private repos during the GOV-004 trial.
+
   **Onboarding:** Agents and developers MUST repoint local `origin` for public
   repos to `ailib-official/*` if still on `hiddenpath/*`. Operational steps live
   in **ai-lib-plans** `docs/governance/REMOTE_MIGRATION.md` (kept in plans, not
@@ -56,6 +63,7 @@ requirements:
 
 relationship_to_other_rules:
   - "GOV-002: merge conflict resolution MUST not reintroduce hiddenpath URLs in workflows or README repository fields."
+  - "GOV-004: private in-scope repos use lan (git-server.local) for daily work; hiddenpath origin retained during trial."
   - "TEST-002: public URL hygiene (ailib-official); narrow file-scoped exceptions (e.g. legacy loader paths) are defined there."
   - "ARCH-003: cross-runtime consistency is independent of local clone path; public canonical org is fixed to ailib-official per this rule."
 
@@ -73,12 +81,13 @@ references:
     - "ARCH-004"
     - "ARCH-003"
     - "TEST-001"
+    - "GOV-004"
   operational_runbook: "ai-lib-plans/docs/governance/REMOTE_MIGRATION.md"
 
 metadata:
   author: "ai-lib team"
   created: "2026-04-03"
-  updated: "2026-04-06"
-  version: "2.1"
+  updated: "2026-06-05"
+  version: "2.2"
   status: "active"
 ---
