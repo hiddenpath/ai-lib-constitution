@@ -1,7 +1,6 @@
 ---
-# 中文摘要：闭源/内网仓库的日常协作以 git-server.local（remote 名 lan）为主；
-# 需要 GitHub Actions CI 的仓库保留 origin（hiddenpath）双头推送。
-# 本规则处于试运行期，GitHub 私有仓暂不删除或归档。
+# 中文摘要：闭源仓日常以 git-server.local（remote 名 lan）为主；需 CI 的仓保留 origin 双头。
+# 合并 b43ef34（lan 主 + 双头 + trial）与 253c67e（硬件/安全/校验）优点；试运行期不动 GitHub 私有仓。
 rule_id: "GOV-004"
 title: "LAN Git primary remote and dual-remote CI for private repositories"
 category: "governance"
@@ -22,35 +21,42 @@ description: |
   ai-lib-rust, etc.) are **out of scope** — they follow GOV-001 and
   REMOTE_MIGRATION.md only.
 
-  **Trial status (2026-06-05):** This rule is **provisional**. The team runs
-  **lan-first** daily collaboration on the internal bare server while
-  validating access, backup, and workflow stability. GitHub **hiddenpath**
-  private repos are **retained** (not deleted, not archived, not emptied)
-  until a recorded promotion decision closes the trial.
+  **Lineage:** Merged 2026-06-05 from lan-first trial rule (b43ef34) and
+  LAN mirror infrastructure rule (253c67e, Spider). **Canonical model:**
+  **`lan` is primary** for daily work; **`origin`** (hiddenpath) is backup
+  and CI gateway — not the default push target during trial.
 
-  **Primary remote (`lan`):** Day-to-day fetch, push, clone, and agent
-  collaboration for in-scope repos MUST use the internal Git server:
+  **Trial status (2026-06-05):** This rule is **provisional**. GitHub
+  **hiddenpath** private repos are **retained** (not deleted, not archived,
+  not emptied) until a recorded promotion decision closes the trial.
 
-  - Host: `git-server.local` (same machine as `192.168.2.22`)
-  - User: `git`
+  **Infrastructure (git-server):**
+  - Host: `git-server.local` (= `192.168.2.22`)
+  - Platform: Raspberry Pi 4B, Ubuntu Server 24.04 LTS (LAN-only git service)
   - Bare root: `/srv/git/repos/`
+  - User: `git` (SSH key auth; UFW restricts exposure)
   - URL pattern: `ssh://git@git-server.local/srv/git/repos/<repo>.git`
   - Local remote name: **`lan`** (convention; not `origin`)
 
-  **Secondary remote (`origin`):** GitHub **hiddenpath** private URLs remain
-  valid as **`origin`** for cold backup and external CI. They are **not**
-  the default push target for routine work during the trial.
+  **Access control:** Internal repos on the LAN server are **SSH-only**
+  (authenticated `git` user). They MUST NOT be exposed through
+  guest-accessible Samba shares or other unauthenticated paths.
 
-  **Dual-remote (CI) repos:** Repositories with **GitHub Actions** (or other
-  CI that triggers on `hiddenpath` push/PR) MUST maintain **both** remotes
-  and follow the sync discipline in the operational runbook. As of
-  2026-06-05 the only in-scope CI repo is **`eos`**.
+  **Primary remote (`lan`):** Day-to-day fetch, push, clone, and agent
+  collaboration for in-scope repos MUST use the LAN git server.
 
-  **Single-remote (lan-only daily) repos:** **ai-lib-constitution**,
-  **ai-lib-plans**, and **papers** use **`lan`** for daily work;
-  **`origin`** push is optional (cold backup), not required every commit.
+  **Secondary remote (`origin`):** GitHub **hiddenpath** for cold backup
+  and external CI. Optional for lan-only-daily repos; mandatory for CI repos.
 
-  Operational setup and commands: **ai-lib-plans/docs/governance/LAN_GIT.md**.
+  **Dual-remote (CI) repos:** GitHub Actions (or equivalent) on
+  **hiddenpath** push/PR. As of 2026-06-05 the in-scope CI repo is **eos**.
+  After merge on origin, **`lan` MUST be synced within 24 hours**.
+
+  **Single-remote (lan-only daily):** **ai-lib-constitution**, **ai-lib-plans**,
+  **papers** — push **`lan`** after every significant change (rule, MEMORY,
+  merged task). **`origin`** push is optional cold backup.
+
+  Operational runbook: **ai-lib-plans/docs/governance/LAN_GIT.md**.
 
 core_principles:
   - "Internal collaboration defaults to lan (git-server.local), not GitHub."
@@ -58,15 +64,18 @@ core_principles:
   - "CI-bound private repos use dual-remote: lan for daily work, origin for GitHub CI."
   - "Public repos remain on ailib-official per GOV-001; GOV-004 does not change that."
   - "Agents MUST NOT repoint in-scope private repos' origin to ailib-official."
+  - "LAN bare repos are SSH-only; never expose via guest Samba."
 
 requirements:
   - "In-scope clones MUST have a `lan` remote pointing at git-server.local bare URL."
-  - "Default daily push: `git push lan <branch>` (or `git push lan --all` when mirroring full branch set)."
-  - "For CI repos (eos): after merge to main on GitHub, MUST sync `lan` (`git push lan main` and feature branches as needed)."
+  - "Default daily push: `git push lan <branch>` (or `git push lan --all` for full branch mirror)."
+  - "Push to `lan` after every significant change; for CI repos, sync `lan` within 24h of origin merge."
   - "For CI repos (eos): PRs and CI gates remain on hiddenpath until internal CI replaces GitHub Actions."
+  - "After GitHub merge (eos): MUST `git push lan main` and relevant feature branches."
   - "MUST NOT delete hiddenpath private repositories or replace their content with placeholders during trial."
-  - "New private repos in scope: create bare repo on lan first; add hiddenpath origin only if CI or off-LAN backup is needed."
-  - "SSH access: use dedicated key `~/.ssh/id_ed25519_lan_git` and Host alias `lan-git` in `~/.ssh/config` (see runbook)."
+  - "New private repos: create bare repo on lan first; add hiddenpath origin only if CI or off-LAN backup needed."
+  - "Bootstrap: `git push --all lan` (and `--tags` if applicable) so fresh LAN clone matches team state."
+  - "SSH: dedicated key `~/.ssh/id_ed25519_lan_git`, Host alias `lan-git` in `~/.ssh/config` (see runbook)."
 
 repository_matrix:
   lan_only_daily:
@@ -87,15 +96,15 @@ repository_matrix:
       lan_url: "ssh://git@git-server.local/srv/git/repos/eos.git"
       origin: "https://github.com/hiddenpath/eos.git"
       ci: true
-      ci_note: "GitHub Actions on push/PR to main; sync lan after merge."
+      ci_note: "GitHub Actions on push/PR to main; sync lan within 24h after merge."
     - name: "ai-lib-gateway"
       lan_url: "ssh://git@git-server.local/srv/git/repos/ai-lib-gateway.git"
       origin: "optional hiddenpath when repo exists and CI is added"
       ci: false
 
 relationship_to_other_rules:
-  - "GOV-001: public code on ailib-official; internal repos stay off ailib-official. GOV-004 adds lan as primary for those internal repos without removing hiddenpath origin."
-  - "GOV-003: eos PR review and merge still use GitHub CI during trial; post-merge lan sync is mandatory."
+  - "GOV-001: public code on ailib-official; internal repos stay off ailib-official. GOV-004 adds lan as primary without removing hiddenpath origin."
+  - "GOV-003: eos PR review uses GitHub CI during trial; Phase 4b lan sync is mandatory."
   - "DOC-002: internal plans/constitution content MUST NOT leak to ailib-official."
 
 validation:
@@ -103,15 +112,22 @@ validation:
     items:
       - "Clone has `lan` remote with git-server.local URL."
       - "Daily pushes go to `lan`, not accidentally only to origin."
-      - "eos: main on lan matches post-merge main on origin after CI PRs."
+      - "eos: after origin merge, lan/main catches up within 24h."
       - "No hiddenpath private repo deletion/archival without closing GOV-004 trial."
       - "Public repos unchanged: origin still ailib-official per GOV-001."
+      - "LAN repos not exposed via guest Samba."
+  - type: "shell_checks"
+    description: "Run after fetch; interpret per repo class (see LAN_GIT.md)."
+    ci_repo_lan_behind_origin: |
+      git -C <repo> fetch lan origin && git -C <repo> log --oneline lan/main..origin/main | wc -l
+    optional_backup_stale: |
+      git -C <repo> fetch lan origin && git -C <repo> log --oneline origin/main..lan/main | wc -l
 
 trial_exit_criteria:
   - "All collaborators reliably use lan for fetch/push for ≥ 4 weeks."
   - "Documented backup or internal CI replaces GitHub dependency where required."
   - "Recorded decision in MEMORY.md to promote GOV-004 from trial to active or to revise."
-  - "If GitHub private repos are archived: update GOV-001, REMOTE_MIGRATION.md, and task URLs in a single migration commit."
+  - "If GitHub private repos are archived: update GOV-001, REMOTE_MIGRATION.md, and task URLs in one migration commit."
 
 references:
   related_rules:
@@ -120,11 +136,14 @@ references:
     - "DOC-002"
   operational_runbook: "ai-lib-plans/docs/governance/LAN_GIT.md"
   tooling: "ai-lib-plans/tools/push_private_repos_to_lan_git.py"
+  merged_from:
+    - "b43ef34 (lan-first trial, dual-remote, eos)"
+    - "253c67e (git-server infrastructure, SSH-only, sync verification)"
 
 metadata:
   author: "ai-lib team"
   created: "2026-06-05"
   updated: "2026-06-05"
-  version: "1.0"
+  version: "1.1"
   status: "trial"
 ---
