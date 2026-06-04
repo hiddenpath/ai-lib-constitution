@@ -1,8 +1,8 @@
 # Business Boundary Rules — ai-lib Ecosystem
 
 > **Source**: Extracted from PRODUCT_PLAN_v2 (synthesis of reports 1-6)
-> **Status**: Draft — pending owner confirmation
-> **Date**: 2026-04-25
+> **Status**: Draft — BIZ-002 revised 2026-06-04 (prism-core alignment); pending owner confirmation
+> **Date**: 2026-04-25 (amended 2026-06-04)
 
 ---
 
@@ -28,13 +28,15 @@ No product name may be introduced outside this matrix without:
 
 | Zone | Content | License Default |
 |------|---------|----------------|
-| **A-band** (Permanently Open) | ai-protocol schemas, E-layer (core/SDK/WASM basic), Vela client core, benchmark methods/baselines | Apache-2.0 |
+| **A-band** (Permanently Open) | ai-protocol schemas; E-layer (ai-lib-core/SDK/WASM basic); **prism-core** (proxy, key-pool, router, usage, admin logic, Anthropic adapter); Vela client core; benchmark methods/baselines | Apache-2.0 |
 | **B-band** (Open, No SLA) | Contact (P) reference implementations, E2E sync client, example routing strategies | Apache-2.0 + explicit "NOT PRODUCTION SLA" disclaimer |
-| **C-band** (May be closed) | Prism routing engine, Key pool, Pricer, Admin API, audit reports, SSO, compliance templates, signed Pack distribution | Proprietary / dual-license TBD |
+| **C-band** (May be closed) | **Product shells** (e.g. Prism/Eos/Enterprise HTTP deploy, compliance UI filters, commercial routing policy); audit reports, SSO, compliance templates, signed Pack distribution | Proprietary / dual-license TBD |
 
 **Rule**: No A-band content may be moved to C-band without owner approval. No C-band content may be silently mixed into A-band repositories.
 
-**Rationale**: Schema is already public in ai-protocol; commercial value must live in implementation + operations, not in hiding specs (Report 3).
+**Prism split (2026-06-04)**: Open **library** (`prism-core`) stays A-band. Closed **product** layers (gateway shell, enterprise policy, hosted ops) may be C-band. Eos consumer proxy paths and non-production hosts are **out of ai-lib product scope** — see `ai-lib-plans` `NEAR_TERM_EXECUTION_2026-06-P1.md`.
+
+**Rationale**: Schema is already public in ai-protocol; routing library openness matches MEMORY § prism-core; commercial value is operations + product policy, not hiding the engine (Report 3, plan audit 2026-06-04).
 
 ---
 
@@ -89,3 +91,4 @@ No "Phase 3" feature may enter Phase 1 commit scope without owner override.
 | Date | Amendment | Author |
 |------|-----------|--------|
 | 2026-04-25 | Initial draft from reports 1-6 synthesis | Spider |
+| 2026-06-04 | BIZ-002: prism-core → A-band; C-band = product shell/ops (PR-PP-003 / plan audit) | cursor-agent |
