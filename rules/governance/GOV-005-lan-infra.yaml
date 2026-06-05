@@ -1,0 +1,69 @@
+# LAN 基础设施管理规则 (GOV-005)
+
+生效日期：2026-06-05
+状态：生效
+覆盖范围：Lan 内部基础设施（git-server、piubt 等局域网设备）
+
+---
+
+## 1. 设备命名规范
+
+| 主机名 | IP | 硬件 | 角色 |
+|--------|-----|------|------|
+| `alex-S8` | — | x86 PC | 开发终端（不保留代码仓库） |
+| `piubt` | 192.168.2.13 | RPi 4B rev 1.5 / 3.7G | Proxy + 工具 + 轻量CI Runner |
+| `git-server` | 192.168.2.22 | RPi 4B rev 1.1 / 1.8G | Git 主仓库 + 备份脚本 |
+
+> 已确定的主机名不改动。新设备命名按 `{功能名}` 或 `{简拼}` 风格，符合已有体系。
+
+## 2. Git 仓库管理
+
+### 2.1 真相来源（Source of Truth）
+- `git-server` 上的裸仓库是**唯一主仓库**，所有私有代码以 LAN 为真相来源。
+- 开发终端（alex-S8）不再保留仓库副本——每次开发从 LAN clone，完成后 push，本地清理。
+- 避免 n 段式推送（不应同时维护本机 + GitHub + LAN 的三层冗余）。
+
+### 2.2 公开代码发布
+- 开源代码通过 GitHub `ailib-official` 组织发布，定期手动或脚本触发。
+- LAN 主仓库与 GitHub 公开仓库之间**不做自动同步**，防止意外泄露私有内容。
+- GitHub `hiddenpath` 私有仓库**不再维护**，已有仓库归档或删除。
+
+### 2.3 仓库列表（LAN git-server 上维护）
+见 [`ai-lib-plans/active/projects/infra/LAN_INFRA.md`](../引用.md)（或同级 plans 文档）。
+
+## 3. CI 分层
+
+| 层级 | 执行位置 | 内容 | 备注 |
+|------|---------|------|------|
+| 轻量 CI | `piubt` 或 `git-server` | `cargo fmt`, `clippy`, 单元测试, git hook | 秒级，不影响 proxy |
+| 重型 CI | GitHub Actions | build --release, WASM, 跨平台, release 打包 | 利用云资源 |
+
+规则：
+- 私有仓库仅做验证性构建（能编译过即为绿色）。
+- 公开发布的重型构建走 GitHub Actions，避免占用本地 CPU/内存。
+- CI Runner 不限制安装在哪个 rpi；仓库在 `git-server` 上，LAN 内网延迟 < 1ms。
+
+## 4. 备份
+
+- `git-server` 上所有裸仓库及配置做**双重异地备份**。
+- 备份方案由执行者规划落地（当前状态：待实施）。
+- 每次重大 commit 后或每日自动执行。
+
+## 5. 开发工作流（简化）
+
+```bash
+# 克隆
+git clone git@git-server.local:/srv/git/repos/<repo>.git
+
+# 开发 → 提交 → 推送
+git push origin main
+
+# 公开发布（仅开源项目）
+git remote add github git@github.com:ailib-official/<repo>.git
+git push github main
+```
+
+---
+
+## 变更历史
+- 2026-06-05：初版，GOV-005。
