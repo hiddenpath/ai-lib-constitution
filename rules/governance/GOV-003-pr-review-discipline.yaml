@@ -130,7 +130,11 @@ the standardized review report format:
     - Update `testing.evidence_on_complete` with CI/check results and PR URL.
     - Write meaningful `completion_notes` summarizing the review outcome.
   - Update `TASKS_INDEX.md` (or equivalent project index) with the new status and merge SHA.
-  - Commit and push to `hiddenpath/ai-lib-plans`.
+  - Commit and push task updates to **`lan`** on ai-lib-plans (GOV-004); optional mirror to `origin` (hiddenpath).
+
+  **Phase 4b — LAN sync (GOV-004, eos and other dual-remote CI repos)**
+  - After merge on GitHub **hiddenpath**, MUST sync **`lan`** (`git push lan main` and merged feature branches as applicable).
+  - See `ai-lib-plans/docs/governance/LAN_GIT.md`.
 
 core_principles:
   - "Every merge is a contract: the reviewer attests that CI, code quality, governance, and plans traceability are all satisfied."
@@ -148,6 +152,7 @@ requirements:
 
 relationship_to_other_rules:
   - "GOV-001: Phase 2 MUST scan for hiddenpath URLs in public repo workflows and config."
+  - "GOV-004: Phase 4 pushes ai-lib-plans to lan; Phase 4b syncs eos (dual-remote) after GitHub merge."
   - "GOV-002: Phase 2 MUST verify no blind conflict resolution when merge conflict existed."
   - "ARCH-003: Phase 2 MUST check cross-runtime consistency when the change touches protocol or transport."
   - "TEST-001: Phase 1 MUST run compliance test subset when applicable."

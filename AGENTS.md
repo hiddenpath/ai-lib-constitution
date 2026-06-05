@@ -15,6 +15,7 @@
 - [ ] **Confirm branch default naming**: Use `main` as canonical default branch (ARCH-004), never `master` as default
 - [ ] **Confirm document privacy boundary**: Internal work docs (discussion/plan/report/summary) must not be pushed to public repos (DOC-002)
 - [ ] **Canonical remote (GOV-001 v2)**: All public repos live on `ailib-official`. Push/PR to `ailib-official/<repo>` directly. `hiddenpath` public code repos are archived/read-only. `ai-lib-constitution`, `ai-lib-plans`, and **`papers`** (private) remain on `hiddenpath`; do **not** repoint `papers` to `ailib-official`.
+- [ ] **LAN Git (GOV-004 trial)**: Private in-scope repos use **`lan`** (`git-server.local`) for daily push/pull. **`eos`** keeps dual-remote (`lan` + `origin`) for GitHub CI — sync `lan` after merge. Do not delete/archive hiddenpath private repos during trial. Runbook: `ai-lib-plans/docs/governance/LAN_GIT.md`.
 
 ---
 
