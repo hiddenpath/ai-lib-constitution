@@ -1,69 +1,128 @@
-# LAN 基础设施管理规则 (GOV-005)
-
-生效日期：2026-06-05
-状态：生效
-覆盖范围：Lan 内部基础设施（git-server、piubt 等局域网设备）
-
 ---
+# 中文摘要：LAN 基础设施——设备角色、git-server 为私有仓真相源、CI 分层、双重备份。
+# 与 GOV-004 配合：004 管 remote/协作；005 管设备、CI、备份与目标态工作流。
+rule_id: "GOV-005"
+title: "LAN infrastructure — devices, source of truth, CI tiers, backup"
+category: "governance"
+severity: "high"
+priority: 5
+languages: []
 
-## 1. 设备命名规范
+applicable_projects:
+  - "ai-lib-constitution"
+  - "ai-lib-plans"
+  - "papers"
+  - "eos"
+  - "ai-lib-gateway"
+  - "infra"
 
-| 主机名 | IP | 硬件 | 角色 |
-|--------|-----|------|------|
-| `alex-S8` | — | x86 PC | 开发终端（不保留代码仓库） |
-| `piubt` | 192.168.2.13 | RPi 4B rev 1.5 / 3.7G | Proxy + 工具 + 轻量CI Runner |
-| `git-server` | 192.168.2.22 | RPi 4B rev 1.1 / 1.8G | Git 主仓库 + 备份脚本 |
+description: |
+  **Scope:** On-premise LAN infrastructure supporting private repos governed by
+  GOV-004. Public runtime repos (ailib-official) follow GOV-001; this rule
+  covers **git-server**, **piubt**, dev terminals, CI placement, and backup.
 
-> 已确定的主机名不改动。新设备命名按 `{功能名}` 或 `{简拼}` 风格，符合已有体系。
+  **Relationship to GOV-004:** GOV-004 defines **`lan`** vs **`origin`** remotes
+  and trial discipline. GOV-005 defines **infrastructure target state**:
+  git-server is **source of truth** for private code; light CI on LAN; heavy CI
+  on GitHub Actions (eos during transition). During GOV-004 **trial**, hiddenpath
+  `origin` for eos is **retained** for heavy CI — not contradictory with SoT on
+  lan after every merge sync.
 
-## 2. Git 仓库管理
+  **Devices (fixed hostnames — do not rename):**
 
-### 2.1 真相来源（Source of Truth）
-- `git-server` 上的裸仓库是**唯一主仓库**，所有私有代码以 LAN 为真相来源。
-- 开发终端（alex-S8）不再保留仓库副本——每次开发从 LAN clone，完成后 push，本地清理。
-- 避免 n 段式推送（不应同时维护本机 + GitHub + LAN 的三层冗余）。
+  | Host | IP | Hardware | Role |
+  |------|-----|----------|------|
+  | `alex-S8` | — | x86 PC | Dev terminal; no long-lived repo copies |
+  | `piubt` | 192.168.2.13 | RPi 4B 3.7G | Proxy, tools, light CI runner |
+  | `git-server` | 192.168.2.22 | RPi 4B 1.8G | Bare git SoT, backup scripts, optional light CI |
 
-### 2.2 公开代码发布
-- 开源代码通过 GitHub `ailib-official` 组织发布，定期手动或脚本触发。
-- LAN 主仓库与 GitHub 公开仓库之间**不做自动同步**，防止意外泄露私有内容。
-- GitHub `hiddenpath` 私有仓库**不再维护**，已有仓库归档或删除。
+  DNS alias: `git-server.local` (= `git-server`).
 
-### 2.3 仓库列表（LAN git-server 上维护）
-见 [`ai-lib-plans/active/projects/infra/LAN_INFRA.md`](../引用.md)（或同级 plans 文档）。
+  **Source of truth:** Bare repos under `/srv/git/repos/` on git-server are the
+  authoritative copy for private repos. Workstations clone from LAN, push to
+  **`lan`**, avoid maintaining parallel local-only canonical copies.
 
-## 3. CI 分层
+  **Public release:** Open source publishes to **ailib-official** only, via
+  **manual or scripted** push — no automatic LAN→GitHub sync (DOC-002 leak
+  prevention).
 
-| 层级 | 执行位置 | 内容 | 备注 |
-|------|---------|------|------|
-| 轻量 CI | `piubt` 或 `git-server` | `cargo fmt`, `clippy`, 单元测试, git hook | 秒级，不影响 proxy |
-| 重型 CI | GitHub Actions | build --release, WASM, 跨平台, release 打包 | 利用云资源 |
+  **hiddenpath private repos (target):** Stop maintaining over time; archive when
+  GOV-004 trial closes. **Transition:** eos heavy CI on origin until LAN CI matures.
 
-规则：
-- 私有仓库仅做验证性构建（能编译过即为绿色）。
-- 公开发布的重型构建走 GitHub Actions，避免占用本地 CPU/内存。
-- CI Runner 不限制安装在哪个 rpi；仓库在 `git-server` 上，LAN 内网延迟 < 1ms。
+  Operational detail: **ai-lib-plans/active/projects/infra/LAN_INFRA.md**.
 
-## 4. 备份
+core_principles:
+  - "git-server bare repos are SoT for private code; daily push/pull uses remote lan."
+  - "Light CI on LAN (fmt/clippy/unit); heavy CI on GitHub Actions for eos."
+  - "Dual off-site backup of all bare repos (gitmirror01 USB + gitmirror02 on piubt)."
+  - "No automatic sync from LAN private repos to ailib-official."
+  - "Dev terminals should not hoard stale long-lived clones; clone → work → push lan."
 
-- `git-server` 上所有裸仓库及配置做**双重异地备份**。
-- 备份方案由执行者规划落地（当前状态：待实施）。
-- 每次重大 commit 后或每日自动执行。
+requirements:
+  - "All in-scope bare repos listed in LAN_INFRA.md MUST exist on git-server."
+  - "Document-class repos (constitution, plans, papers): post-receive hook triggers real-time backup."
+  - "Full backup cron daily; manual `git-backup.sh full` after major infra changes."
+  - "Light CI runners MAY run on piubt or git-server; MUST NOT starve piubt proxy."
+  - "After eos GitHub merge: sync lan within 24h (GOV-004/GOV-005 joint requirement)."
+  - "SSH-only repo access; no guest Samba exposure (see GOV-004 v1.1)."
 
-## 5. 开发工作流（简化）
+ci_tiers:
+  light:
+    location: "piubt or git-server"
+    scope: "cargo fmt, clippy, unit tests, git hook checks"
+    latency: "seconds; LAN <1ms to git-server"
+  heavy:
+    location: "GitHub Actions (hiddenpath/eos during trial)"
+    scope: "release build, WASM, docker/e2e, cross-platform, release artifacts"
+    note: "Migrate to LAN only with recorded infra decision"
 
-```bash
-# 克隆
-git clone git@git-server.local:/srv/git/repos/<repo>.git
+backup:
+  primary_script: "git-server:/home/git/git-backup.sh"
+  log: "git-server:/home/git/git-backup.log"
+  destinations:
+    - name: gitmirror01
+      host: git-server
+      path: "/mnt/backup/gitmirror01/"
+      media: "USB 500G HDD NTFS"
+    - name: gitmirror02
+      host: piubt
+      path: "/gitmirror02/"
+      transport: "rsync over SSH"
+  cadence:
+    realtime: "constitution, plans, papers — post-receive hook"
+    daily: "all repos — cron 0 11 * * *"
+    snapshot: "snapshot-YYYYMMDD on gitmirror01, retain 30 days"
 
-# 开发 → 提交 → 推送
-git push origin main
+repository_inventory:
+  see: "ai-lib-plans/active/projects/infra/LAN_INFRA.md"
 
-# 公开发布（仅开源项目）
-git remote add github git@github.com:ailib-official/<repo>.git
-git push github main
-```
+relationship_to_other_rules:
+  - "GOV-004: remote naming (lan/origin), trial, eos dual-remote sync."
+  - "GOV-001: public code on ailib-official; no LAN auto-publish."
+  - "GOV-003: eos PR merge → Phase 4b lan sync."
+  - "DOC-002: no private content on public org."
 
+validation:
+  - type: "review_checklist"
+    items:
+      - "LAN_INFRA.md repo list matches /srv/git/repos/ on git-server."
+      - "Backup log shows successful daily run within 48h."
+      - "Light CI job can clone from git-server and run fmt/clippy on a sample repo."
+      - "eos lan/main not behind origin/main >24h after merge."
+
+references:
+  related_rules:
+    - "GOV-004"
+    - "GOV-001"
+    - "GOV-003"
+  operational_runbook: "ai-lib-plans/active/projects/infra/LAN_INFRA.md"
+  git_collaboration: "ai-lib-plans/docs/governance/LAN_GIT.md"
+  tasks: "ai-lib-plans/active/projects/infra/TASKS_INDEX.md"
+
+metadata:
+  author: "ai-lib team"
+  created: "2026-06-05"
+  updated: "2026-06-05"
+  version: "1.1"
+  status: "active"
 ---
-
-## 变更历史
-- 2026-06-05：初版，GOV-005。

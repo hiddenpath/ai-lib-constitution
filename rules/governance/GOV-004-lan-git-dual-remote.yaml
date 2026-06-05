@@ -104,6 +104,7 @@ repository_matrix:
 
 relationship_to_other_rules:
   - "GOV-001: public code on ailib-official; internal repos stay off ailib-official. GOV-004 adds lan as primary without removing hiddenpath origin."
+  - "GOV-005: infra SoT on git-server, CI tiers, dual backup; complements this rule's remote discipline."
   - "GOV-003: eos PR review uses GitHub CI during trial; Phase 4b lan sync is mandatory."
   - "DOC-002: internal plans/constitution content MUST NOT leak to ailib-official."
 
@@ -133,6 +134,7 @@ references:
   related_rules:
     - "GOV-001"
     - "GOV-003"
+    - "GOV-005"
     - "DOC-002"
   operational_runbook: "ai-lib-plans/docs/governance/LAN_GIT.md"
   tooling: "ai-lib-plans/tools/push_private_repos_to_lan_git.py"
