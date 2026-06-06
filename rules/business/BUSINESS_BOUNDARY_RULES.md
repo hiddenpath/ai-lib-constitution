@@ -1,8 +1,9 @@
 # Business Boundary Rules — ai-lib Ecosystem
 
 > **Source**: Extracted from PRODUCT_PLAN_v2 (synthesis of reports 1-6)
-> **Status**: Draft — BIZ-002 revised 2026-06-04 (prism-core alignment); pending owner confirmation
-> **Date**: 2026-04-25 (amended 2026-06-04)
+> **Status**: **SUPERSEDED** — individual rules migrated to per-rule YAML files (2026-06-06, PR-PP-003).
+> This document is retained for history only. See `rules/business/BIZ-*.yaml` for canonical versions.
+> **Date**: 2026-04-25 (amended 2026-06-04; superseded 2026-06-06)
 
 ---
 
@@ -92,3 +93,4 @@ No "Phase 3" feature may enter Phase 1 commit scope without owner override.
 |------|-----------|--------|
 | 2026-04-25 | Initial draft from reports 1-6 synthesis | Spider |
 | 2026-06-04 | BIZ-002: prism-core → A-band; C-band = product shell/ops (PR-PP-003 / plan audit) | cursor-agent |
+| 2026-06-06 | Extracted BIZ-001~005 to per-rule YAML files; mark superseded (PR-PP-003) | cursor-agent |
