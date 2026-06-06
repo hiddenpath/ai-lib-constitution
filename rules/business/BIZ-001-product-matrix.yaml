@@ -1,0 +1,56 @@
+---
+rule_id: "BIZ-001"
+title: "Product Matrix Architecture — 2×2 Matrix Governance"
+category: "business"
+severity: "critical"
+priority: 1
+languages: []
+applicable_projects:
+  - "prism"
+  - "vela"
+  - "eos"
+
+description: |
+  The ai-lib product line is organized as a 2×2 matrix
+  (Architecture Layer × Market Layer). No product name may
+  be introduced outside this matrix without explicit governance steps.
+
+core_principle: |
+  Architecture Layer × Market Layer:
+  - Prism (P-layer) → Prism Enterprise (To B) / Prism (To C)
+  - Vela  (A-layer) → Vela Pro        (To B) / Vela  (To C)
+
+motivation: |
+  Reports 1-4 identified 7 scattered product concepts;
+  the matrix converges them into 2 product lines with clear
+  market positioning to prevent naming fragmentation.
+
+requirements:
+  - "Every product must fit one cell of the 2×2 matrix"
+  - "New product name introduction requires PRODUCT_PLAN_v2.md update"
+  - "New product name requires owner confirmation"
+  - "ai-lib-plans/MEMORY.md must be synced within 24h"
+
+violations_to_avoid:
+  type: "governance"
+  patterns:
+    - "Introducing a product name not in the matrix without plan update"
+    - "Skipping owner confirmation for naming"
+    - "Out-of-sync between constitution and plans"
+
+validation:
+  - type: "review"
+    check: "Compare product names in all docs against the canonical matrix"
+
+references:
+  source: "ai-lib-constitution/rules/business/BUSINESS_BOUNDARY_RULES.md"
+  supersedes: "BIZ-001 section in BUSINESS_BOUNDARY_RULES.md"
+  related_rules:
+    - "BIZ-002"
+
+metadata:
+  author: "Spider"
+  created: "2026-04-25"
+  last_modified: "2026-06-06"
+  version: "1.1"
+  status: "active"

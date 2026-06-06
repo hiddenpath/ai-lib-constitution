@@ -1,0 +1,91 @@
+---
+rule_id: "BIZ-005"
+title: "Phase Gate Discipline — Feature Entry Governance"
+category: "business"
+severity: "high"
+priority: 2
+languages: []
+applicable_projects:
+  - "prism"
+  - "vela"
+  - "eos"
+  - "ai-protocol"
+  - "ai-lib-rust"
+
+description: |
+  New product features are gated by Phase milestones. No Phase 3
+  feature may enter Phase 1 commit scope without owner override.
+  Each phase has explicit entry gates that must be satisfied before
+  feature work begins.
+
+core_principle: |
+  Left-to-right execution. Phase N+1 features do not enter Phase N
+  scope without explicit owner override.
+
+phase_gate_table:
+  phase_1:
+    features:
+      - "Prism basic API + Key pool"
+    gate: "M1 (proxy works)"
+  phase_2:
+    features:
+      - "Billing / margin"
+      - "Enterprise (SSO, audit, private deploy)"
+      - "WASM client-side routing"
+    gate: "First paying user"
+  phase_2_plus:
+    features:
+      - "Compliance templates"
+    gate: "Industry partner"
+  phase_3:
+    features:
+      - "Multi-modal"
+    gate: "Stable revenue"
+  never_in_12_month:
+    features:
+      - "P2P / Mesh"
+    gate: "Research only"
+
+motivation: |
+  Report 2 identified over-promising risk (features leaking across phases);
+  Report 4 requires explicit PT-073 dependency tagging. Phase gate discipline
+  prevents scope creep and keeps deliverables predictable.
+
+requirements:
+  - "Every feature must declare its target phase in project plan"
+  - "No Phase 3 feature in Phase 1 commit scope without owner override"
+  - "Cross-phase dependencies must be explicitly tagged (e.g., 'depends on PT-073')"
+  - "Phase gate criteria must be verifiable (not subjective)"
+
+exceptions:
+  - "Preparatory work (data model, trait definition) that doesn't expose the feature"
+  - "Owner explicitly approves phase override in writing (task YAML or PR comment)"
+
+violations_to_avoid:
+  type: "planning"
+  patterns:
+    - "Silently including Phase 3 features in Phase 1 PRs"
+    - "Untagged cross-phase dependencies"
+    - "Defining Phase N features without gate criteria"
+
+validation:
+  - type: "review"
+    check: "Audit PRs against project phase roadmap"
+  - type: "automated"
+    check: "CI label-based gate check (future: phase:3 label blocks merge to phase-1 branch)"
+
+references:
+  source: "ai-lib-constitution/rules/business/BUSINESS_BOUNDARY_RULES.md"
+  supersedes: "BIZ-005 section in BUSINESS_BOUNDARY_RULES.md"
+  related_rules:
+    - "BIZ-001"
+    - "BIZ-002"
+    - "BIZ-004"
+    - "ARCH-001"
+
+metadata:
+  author: "Spider"
+  created: "2026-04-25"
+  last_modified: "2026-06-06"
+  version: "1.1"
+  status: "active"

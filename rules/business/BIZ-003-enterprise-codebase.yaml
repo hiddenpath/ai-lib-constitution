@@ -1,0 +1,57 @@
+---
+rule_id: "BIZ-003"
+title: "Prism Enterprise Codebase — Shared Repository with Feature Flags"
+category: "business"
+severity: "high"
+priority: 2
+languages: ["rust"]
+applicable_projects:
+  - "prism"
+
+description: |
+  Prism Enterprise and Prism share the same codebase. Enterprise-exclusive
+  features are gated behind Rust feature flags (`--features enterprise`),
+  not separate repositories. This prevents "free version bug fixed,
+  enterprise version forgotten" drift.
+
+core_principle: |
+  One codebase, one truth. Enterprise differentiation is a feature flag,
+  not a fork.
+
+motivation: |
+  Separate repositories create maintenance drift — bugs fixed in the
+  free version may not propagate to the enterprise fork. Rust's feature
+  flag mechanism is the natural solution (D2 confirmed).
+
+requirements:
+  - "Enterprise features use Rust `#[cfg(feature = \"enterprise\")]` gates"
+  - "No separate enterprise repository"
+  - "Shared CI must test both default and `--features enterprise` builds"
+  - "Feature flag naming convention: `enterprise` for core enterprise, granular flags for sub-features"
+
+violations_to_avoid:
+  type: "code_pattern"
+  patterns:
+    - "Separate enterprise repository or workspace member"
+    - "Hardcoded enterprise-only code paths without feature gates"
+    - "Conditional compilation using environment variables instead of features"
+
+validation:
+  - type: "build"
+    check: "cargo build --features enterprise must compile cleanly"
+  - type: "test"
+    check: "cargo test --features enterprise must pass alongside default tests"
+
+references:
+  source: "ai-lib-constitution/rules/business/BUSINESS_BOUNDARY_RULES.md"
+  supersedes: "BIZ-003 section in BUSINESS_BOUNDARY_RULES.md"
+  related_rules:
+    - "BIZ-001"
+    - "BIZ-002"
+
+metadata:
+  author: "Spider"
+  created: "2026-04-25"
+  last_modified: "2026-06-06"
+  version: "1.1"
+  status: "active"

@@ -1,0 +1,65 @@
+---
+rule_id: "BIZ-004"
+title: "Privacy-First Architecture — Metadata-Only P-Layer Storage"
+category: "business"
+severity: "critical"
+priority: 1
+languages: []
+applicable_projects:
+  - "prism"
+  - "vela"
+
+description: |
+  Prism P-layer storage is strictly limited to ExecutionMetadata
+  (provider_id, model_id, latencies, usage, cost, error_code).
+  Conversation content MUST NOT touch P-layer persistent storage.
+  This is an architectural constraint, not a policy choice.
+
+core_principle: |
+  P-layer = metadata only. Conversation content = A-layer only.
+  Architecture-level privacy, not configurable.
+
+motivation: |
+  "Architecture-level privacy" is a core differentiator vs competitors:
+  - OpenRouter: privacy is configurable (opt-in)
+  - Poe: privacy is policy-based (can change)
+  - Prism: privacy is architectural (can't change without rewrite)
+  This creates an unassailable trust moat.
+
+requirements:
+  - "P-layer stores ONLY: provider_id, model_id, latencies, usage, cost, error_code"
+  - "P-layer MUST NOT store: messages, tool calls, conversation context, user inputs"
+  - "All P-layer database schemas must be auditable for this constraint"
+  - "Phase 2+ E2E encrypted sync stores only ciphertext blobs (zero-knowledge)"
+  - "Decryption keys never leave Vela (A-layer)"
+
+exceptions:
+  - "E2E encrypted sync ciphertext blobs (Phase 2+): zero-knowledge, keys stay in Vela"
+  - "NOT an exception: 'we need to store messages for debugging' — this is a violation"
+
+violations_to_avoid:
+  type: "code_pattern"
+  patterns:
+    - "Storing message content in SQLite/Postgres on P-layer"
+    - "Logging conversation content to persistent storage"
+    - "Caching user inputs server-side"
+
+validation:
+  - type: "schema_audit"
+    check: "Review all P-layer database schemas: no message content columns"
+  - type: "code_review"
+    check: "Grep for message/chat/conversation in persistent storage code paths"
+
+references:
+  source: "ai-lib-constitution/rules/business/BUSINESS_BOUNDARY_RULES.md"
+  supersedes: "BIZ-004 section in BUSINESS_BOUNDARY_RULES.md"
+  related_rules:
+    - "BIZ-002"
+    - "BIZ-005"
+
+metadata:
+  author: "Spider"
+  created: "2026-04-25"
+  last_modified: "2026-06-06"
+  version: "1.1"
+  status: "active"
